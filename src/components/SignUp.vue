@@ -6,21 +6,19 @@
       <div class="mb-3">
         <label class="form-label">Full Name</label>
         <input type="text" class="form-control" v-model.trim="fullname" placeholder="Enter full name" />
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Username</label>
-        <input type="text" class="form-control" v-model.trim="username" placeholder="Enter username" />
+        <small class="text-danger" v-if="errors.fullname">{{ errors.fullname[0] }}</small>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Email</label>
         <input type="email" class="form-control" v-model.trim="email" placeholder="Enter email" />
+        <small class="text-danger" v-if="errors.email">{{ errors.email[0] }}</small>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Password</label>
         <input type="password" class="form-control" v-model.trim="password" placeholder="Enter password" />
+        <small class="text-danger" v-if="errors.password">{{ errors.password[0] }}</small>
       </div>
 
       <div class="mb-4">
@@ -31,10 +29,14 @@
           <option value="current">Current</option>
           <option value="fixed">Fixed</option>
         </select>
+        <small class="text-danger" v-if="errors.accountType">{{ errors.accountType[0] }}</small>
       </div>
 
-      <button class="btn btn-primary w-100" @click="submitForm">Sign Up</button>
-      <div class="text-danger mt-3 text-center">{{ errorMessage }}</div>
+      <button class="btn btn-primary w-100" @click="submitForm" :disabled="loading">
+        {{ loading ? 'Signing Up...' : 'Sign Up' }}
+      </button>
+      <div class="text-success mt-3 text-center" v-if="successMessage">{{ successMessage }}</div>
+      <div class="text-danger mt-3 text-center" v-if="errorMessage">{{ errorMessage }}</div>
     </div>
   </div>
 </template>
@@ -46,40 +48,53 @@ export default {
   data() {
     return {
       fullname: '',
-      username: '',
       email: '',
       password: '',
       accountType: '',
+      errors: {},
       errorMessage: '',
+      successMessage: '',
+      loading: false,
     };
   },
   methods: {
     async submitForm() {
+      this.errors = {};
       this.errorMessage = '';
+      this.successMessage = '';
 
-      if (!this.fullname || !this.username || !this.email || !this.password || !this.accountType) {
+      // Client-side validation
+      if (!this.fullname || !this.email || !this.password || !this.accountType) {
         this.errorMessage = 'Please fill in all fields.';
         return;
       }
 
+      this.loading = true;
+
       try {
         const res = await axios.post('http://127.0.0.1:8000/api/register', {
           fullname: this.fullname,
-          username: this.username,
           email: this.email,
           password: this.password,
           accountType: this.accountType,
         });
 
         if (res.data.status === '200') {
-          this.errorMessage = res.data.msg;
-          this.$router.push('/login');
+          this.successMessage = res.data.msg;
+          setTimeout(() => {
+            this.$router.push('/login');
+          }, 1500);
+        } else if (res.data.status === '422') {
+          // Validation errors from Laravel
+          this.errors = res.data.msg;
         } else {
-          this.errorMessage = res.data.msg;
+          this.errorMessage = 'Something went wrong.';
         }
       } catch (err) {
         console.error(err);
         this.errorMessage = 'Something went wrong. Try again.';
+      } finally {
+        this.loading = false;
       }
     },
   },
