@@ -90,9 +90,12 @@
 
 <script setup>
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 import axios from "axios";
 import { ChevronUpDownIcon } from "@heroicons/vue/24/solid";
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from "@headlessui/vue";
+
+const router = useRouter();
 
 const form = ref({
   fullname: "",
@@ -131,8 +134,7 @@ const submitForm = async () => {
     if (res.data.status === "200") {
       successMessage.value = res.data.msg;
       setTimeout(() => {
-        // redirect to login
-        this.$router.push("/login");
+        router.push({ name: "Login" });
       }, 1500);
     } else if (res.data.status === "422") {
       errors.value = res.data.msg; // Laravel validation errors
