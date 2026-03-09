@@ -2,14 +2,14 @@
 </script>
 
 <template>
-  <header>
-  </header>
+  <div>
+    <header>
+    </header>
 
-  <main>
-    <RouterView/>
-  </main>
+    <main>
+      <RouterView />
+    </main>
+  </div>
 </template>
 
-<style>
-
-</style>
+<style></style>
