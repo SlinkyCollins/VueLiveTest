@@ -91,7 +91,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
+import api from "@/utils/api";
 import { ChevronUpDownIcon } from "@heroicons/vue/24/solid";
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from "@headlessui/vue";
 
@@ -124,7 +124,7 @@ const submitForm = async () => {
   loading.value = true;
 
   try {
-    const res = await axios.post("http://127.0.0.1:8000/api/register", {
+    const res = await api.post("/register", {
       fullname: form.value.fullname,
       email: form.value.email,
       password: form.value.password,
