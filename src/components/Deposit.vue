@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
@@ -61,6 +61,16 @@ const loading = ref(false);
 const errors = ref({});
 const errorMessage = ref('');
 const successMessage = ref('');
+
+onMounted(async () => {
+  if (!authStore.user) {
+    try {
+      await authStore.fetchDashboard();
+    } catch {
+      router.push({ name: 'Login' });
+    }
+  }
+});
 
 const clearErrors = () => {
   errors.value = {};
