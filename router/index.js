@@ -1,5 +1,7 @@
 import DashBoard from "@/components/DashBoard.vue";
 import Deposit from "@/components/Deposit.vue";
+import Transfer from "@/components/Transfer.vue";
+import TransactionHistory from "@/components/TransactionHistory.vue";
 import Home from "@/components/Home.vue";
 import LogIn from "@/components/LogIn.vue";
 import SignUp from "@/components/SignUp.vue";
@@ -32,6 +34,18 @@ const routes = [
     path: "/deposit",
     name: "Deposit",
     component: Deposit,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/transfer",
+    name: "Transfer",
+    component: Transfer,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/transactions",
+    name: "TransactionHistory",
+    component: TransactionHistory,
     meta: { requiresAuth: true },
   },
 ];

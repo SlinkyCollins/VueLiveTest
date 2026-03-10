@@ -36,5 +36,12 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = res.data.user;
   }
 
-  return { token, user, isAuthenticated, setAuth, setUser, updateBalance, clearAuth, fetchDashboard };
+  async function fetchBalance() {
+    const res = await api.get('/balance');
+    if (user.value) {
+      user.value.balance = res.data.balance;
+    }
+  }
+
+  return { token, user, isAuthenticated, setAuth, setUser, updateBalance, clearAuth, fetchDashboard, fetchBalance };
 });

@@ -68,7 +68,14 @@ onMounted(async () => {
       await authStore.fetchDashboard();
     } catch {
       router.push({ name: 'Login' });
+      return;
     }
+  }
+  // Refresh balance from lightweight endpoint
+  try {
+    await authStore.fetchBalance();
+  } catch {
+    // Dashboard data is still usable if balance fetch fails
   }
 });
 

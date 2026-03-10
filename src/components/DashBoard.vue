@@ -44,6 +44,14 @@
           @click="router.push({ name: 'Deposit' })"
           class="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition"
         >+ Add Money</button>
+        <button
+          @click="router.push({ name: 'Transfer' })"
+          class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+        >Transfer</button>
+        <button
+          @click="router.push({ name: 'TransactionHistory' })"
+          class="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 transition"
+        >History</button>
       </div>
 
       <!-- User Details Card -->
