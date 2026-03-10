@@ -1,8 +1,10 @@
 import DashBoard from "@/components/DashBoard.vue";
+import Deposit from "@/components/Deposit.vue";
 import Home from "@/components/Home.vue";
 import LogIn from "@/components/LogIn.vue";
 import SignUp from "@/components/SignUp.vue";
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 
 const routes = [
   {
@@ -26,6 +28,12 @@ const routes = [
     component: DashBoard,
     meta: { requiresAuth: true },
   },
+  {
+    path: "/deposit",
+    name: "Deposit",
+    component: Deposit,
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
@@ -35,13 +43,11 @@ const router = createRouter({
 
 // Navigation guard
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem("access_token");
+  const authStore = useAuthStore();
 
-  if (to.meta.requiresAuth && !token) {
-    // Trying to access protected page without token → go to login
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: "Login" });
-  } else if (token && (to.name === "Login" || to.name === "signup")) {
-    // Already logged in but trying to visit login/signup → go to dashboard
+  } else if (authStore.isAuthenticated && (to.name === "Login" || to.name === "signup")) {
     next({ name: "Dashboard" });
   } else {
     next();

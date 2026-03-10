@@ -38,6 +38,14 @@
         </div>
       </div>
 
+      <!-- Quick Actions -->
+      <div class="flex gap-3">
+        <button
+          @click="router.push({ name: 'Deposit' })"
+          class="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition"
+        >+ Add Money</button>
+      </div>
+
       <!-- User Details Card -->
       <div class="bg-white rounded-xl shadow p-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">Profile</h2>
@@ -65,31 +73,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+import api from '@/utils/api';
+import { useAuthStore } from '@/stores/auth';
 
-const user = ref(null);
 const loading = ref(true);
 const errorMessage = ref('');
 const loggingOut = ref(false);
 const router = useRouter();
+const authStore = useAuthStore();
+
+const user = computed(() => authStore.user);
 
 const handleLogout = async () => {
   loggingOut.value = true;
-  const token = localStorage.getItem('access_token');
 
   try {
-    await axios.post('http://127.0.0.1:8000/api/logout', {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    await api.post('/logout');
   } catch (err) {
     // Even if the API call fails, clear local data and redirect
   } finally {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
+    authStore.clearAuth();
     loggingOut.value = false;
     router.push({ name: 'Login' });
   }
@@ -99,26 +104,15 @@ const fetchDashboard = async () => {
   loading.value = true;
   errorMessage.value = '';
 
-  const token = localStorage.getItem('access_token');
-
-  if (!token) {
+  if (!authStore.token) {
     router.push({ name: 'Login' });
     return;
   }
 
   try {
-    const res = await axios.get('http://127.0.0.1:8000/api/dashboard', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    user.value = res.data.user;
+    await authStore.fetchDashboard();
   } catch (err) {
-    if (err.response && err.response.status === 401) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      router.push({ name: 'Login' });
-    } else if (err.code === 'ERR_NETWORK') {
+    if (err.code === 'ERR_NETWORK') {
       errorMessage.value = 'Unable to connect to the server.';
     } else {
       errorMessage.value = 'Failed to load dashboard data.';

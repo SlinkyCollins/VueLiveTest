@@ -60,7 +60,8 @@
 import { ref } from 'vue';
 import { useRouter } from "vue-router";
 import { Switch } from '@headlessui/vue';
-import axios from 'axios';
+import api from '@/utils/api';
+import { useAuthStore } from '@/stores/auth';
 
 const form = ref({
   email: "",
@@ -72,6 +73,7 @@ const errors = ref({});
 const errorMessage = ref("");
 const successMessage = ref("");
 const router = useRouter();
+const authStore = useAuthStore();
 
 const clearFieldError = (field) => {
   if (errors.value[field]) {
@@ -106,7 +108,7 @@ const handleLogin = async () => {
   loading.value = true;
 
   try {
-    const res = await axios.post("http://127.0.0.1:8000/api/login", {
+    const res = await api.post("/login", {
       email: form.value.email,
       password: form.value.password,
     });
@@ -114,9 +116,8 @@ const handleLogin = async () => {
     if (res.data.status === "200") {
       successMessage.value = res.data.msg;
 
-      // Store token
-      localStorage.setItem("access_token", res.data.access_token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      // Store token and user in Pinia
+      authStore.setAuth(res.data.access_token, res.data.user);
 
       setTimeout(() => {
         router.push({ name: "Dashboard" });
