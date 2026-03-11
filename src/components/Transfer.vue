@@ -87,6 +87,21 @@
           >{{ transferring ? 'Sending...' : 'Send Money' }}</button>
         </div>
 
+        <!-- Transaction PIN -->
+        <div>
+          <label class="block text-gray-700 font-medium text-sm">Transaction PIN</label>
+          <input
+            v-model="pin"
+            type="password"
+            maxlength="4"
+            inputmode="numeric"
+            placeholder="Enter 4-digit PIN"
+            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-center text-xl tracking-[0.5em]"
+            :class="{ 'border-red-500': errors.pin }"
+          />
+          <p v-if="errors.pin" class="text-red-500 text-sm mt-1">{{ errors.pin }}</p>
+        </div>
+
         <p v-if="errorMessage" class="text-red-600 text-center text-sm mt-3">{{ errorMessage }}</p>
       </div>
 
@@ -116,6 +131,7 @@ const authStore = useAuthStore();
 
 const step = ref(1);
 const form = ref({ account_number: '', amount: '' });
+const pin = ref('');
 const verifiedName = ref('');
 const verifying = ref(false);
 const transferring = ref(false);
@@ -203,6 +219,12 @@ const handleVerify = async () => {
 
 const handleTransfer = async () => {
   errorMessage.value = '';
+
+  if (!pin.value || !/^\d{4}$/.test(pin.value)) {
+    errors.value.pin = 'Please enter your 4-digit PIN.';
+    return;
+  }
+
   transferring.value = true;
 
   try {
@@ -210,11 +232,16 @@ const handleTransfer = async () => {
       account_number: form.value.account_number,
       account_name: verifiedName.value,
       amount: Number(form.value.amount),
+      pin: pin.value,
     });
 
     if (res.data.status === '200') {
       authStore.updateBalance(res.data.new_balance);
       step.value = 3;
+    } else if (res.data.status === '401') {
+      errors.value.pin = res.data.msg;
+    } else if (res.data.status === '403') {
+      errorMessage.value = res.data.msg;
     } else {
       errorMessage.value = res.data.msg;
     }

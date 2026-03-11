@@ -39,7 +39,7 @@
       </div>
 
       <!-- Quick Actions -->
-      <div class="flex gap-3">
+      <div class="flex gap-3 flex-wrap">
         <button
           @click="router.push({ name: 'Deposit' })"
           class="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition"
@@ -52,6 +52,24 @@
           @click="router.push({ name: 'TransactionHistory' })"
           class="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 transition"
         >History</button>
+      </div>
+
+      <!-- Security Section -->
+      <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3">Security</h2>
+        <div class="flex gap-3">
+          <button
+            v-if="!user.has_pin"
+            @click="router.push({ name: 'SetPin' })"
+            class="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition"
+          >Set Transaction PIN</button>
+          <button
+            v-else
+            @click="router.push({ name: 'ChangePin' })"
+            class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
+          >Change PIN</button>
+        </div>
+        <p v-if="!user.has_pin" class="text-amber-600 text-sm mt-2">⚠ You must set a transaction PIN before making transfers.</p>
       </div>
 
       <!-- User Details Card -->
