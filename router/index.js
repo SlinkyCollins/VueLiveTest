@@ -2,6 +2,7 @@ import DashBoard from "@/components/DashBoard.vue";
 import Deposit from "@/components/Deposit.vue";
 import Transfer from "@/components/Transfer.vue";
 import TransactionHistory from "@/components/TransactionHistory.vue";
+import Beneficiaries from "@/components/Beneficiaries.vue";
 import SetPin from "@/components/SetPin.vue";
 import ChangePin from "@/components/ChangePin.vue";
 import Home from "@/components/Home.vue";
@@ -48,6 +49,12 @@ const routes = [
     path: "/transactions",
     name: "TransactionHistory",
     component: TransactionHistory,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/beneficiaries",
+    name: "Beneficiaries",
+    component: Beneficiaries,
     meta: { requiresAuth: true },
   },
   {
