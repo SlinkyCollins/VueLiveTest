@@ -56,19 +56,6 @@
         </div>
 
         <div>
-          <label class="block text-gray-700 font-medium">Recipient Account Name</label>
-          <input
-            v-model="form.account_name"
-            @input="clearErrors"
-            type="text"
-            placeholder="Recipient full name"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            :class="{ 'border-red-500': errors.account_name }"
-          />
-          <p v-if="errors.account_name" class="text-red-500 text-sm mt-1">{{ errors.account_name }}</p>
-        </div>
-
-        <div>
           <label class="block text-gray-700 font-medium">Amount (₦)</label>
           <input
             v-model="form.amount"
@@ -94,20 +81,10 @@
               <label class="block text-gray-700 font-medium">Bank Name</label>
               <input
                 v-model="form.bank_name"
-                @input="clearErrors"
                 type="text"
+                disabled
                 class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 placeholder="Vaultly Bank"
-              />
-            </div>
-            <div>
-              <label class="block text-gray-700 font-medium">Bank Code</label>
-              <input
-                v-model="form.bank_code"
-                @input="clearErrors"
-                type="text"
-                class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                placeholder="999001"
               />
             </div>
           </div>
@@ -201,10 +178,8 @@ const authStore = useAuthStore();
 const step = ref(1);
 const form = ref({
   account_number: '',
-  account_name: '',
   amount: '',
   bank_name: 'Vaultly Bank',
-  bank_code: '999001',
 });
 const pin = ref('');
 const verifiedName = ref('');
@@ -237,9 +212,7 @@ onMounted(async () => {
   if (route.query.beneficiaryId) {
     selectedBeneficiaryId.value = String(route.query.beneficiaryId);
     form.value.account_number = String(route.query.accountNumber || '');
-    form.value.account_name = String(route.query.accountName || '');
     form.value.bank_name = String(route.query.bankName || 'Vaultly Bank');
-    form.value.bank_code = String(route.query.bankCode || '999001');
   }
 
   fetchBeneficiaries();
@@ -267,9 +240,7 @@ const useSavedBeneficiary = () => {
   }
 
   form.value.account_number = selected.account_number;
-  form.value.account_name = selected.account_name;
   form.value.bank_name = selected.bank_name;
-  form.value.bank_code = selected.bank_code || '999001';
   saveBeneficiary.value = false;
   clearErrors();
 };
@@ -287,10 +258,6 @@ const validateStep1 = () => {
     newErrors.account_number = 'Account number is required.';
   } else if (form.value.account_number.length !== 12) {
     newErrors.account_number = 'Account number must be 12 digits.';
-  }
-
-  if (!form.value.account_name && !selectedBeneficiaryId.value) {
-    newErrors.account_name = 'Account name is required.';
   }
 
   const amount = Number(form.value.amount);
@@ -324,7 +291,6 @@ const handleVerify = async () => {
 
     if (res.data.status === '200') {
       verifiedName.value = res.data.account_name;
-      form.value.account_name = res.data.account_name;
       step.value = 2;
     } else if (res.data.status === '422') {
       const serverErrors = res.data.msg;
@@ -358,12 +324,10 @@ const handleTransfer = async () => {
     const res = await api.post('/transfer', {
       beneficiary_id: selectedBeneficiaryId.value ? Number(selectedBeneficiaryId.value) : null,
       account_number: form.value.account_number,
-      account_name: verifiedName.value,
       amount: Number(form.value.amount),
       pin: pin.value,
       save_beneficiary: !selectedBeneficiaryId.value && saveBeneficiary.value,
       bank_name: form.value.bank_name,
-      bank_code: form.value.bank_code,
     });
 
     if (res.data.status === '200') {

@@ -30,42 +30,16 @@
           </div>
 
           <div>
-            <label class="block text-gray-700 font-medium">Account Name</label>
-            <input
-              v-model="form.account_name"
-              @input="clearErrors"
-              type="text"
-              class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              :class="{ 'border-red-500': errors.account_name }"
-              placeholder="Recipient full name"
-            />
-            <p v-if="errors.account_name" class="text-red-500 text-sm mt-1">{{ errors.account_name }}</p>
-          </div>
-
-          <div>
             <label class="block text-gray-700 font-medium">Bank Name</label>
             <input
               v-model="form.bank_name"
-              @input="clearErrors"
               type="text"
+              disabled
               class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               :class="{ 'border-red-500': errors.bank_name }"
               placeholder="Vaultly Bank"
             />
             <p v-if="errors.bank_name" class="text-red-500 text-sm mt-1">{{ errors.bank_name }}</p>
-          </div>
-
-          <div>
-            <label class="block text-gray-700 font-medium">Bank Code</label>
-            <input
-              v-model="form.bank_code"
-              @input="clearErrors"
-              type="text"
-              class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              :class="{ 'border-red-500': errors.bank_code }"
-              placeholder="e.g. 999001"
-            />
-            <p v-if="errors.bank_code" class="text-red-500 text-sm mt-1">{{ errors.bank_code }}</p>
           </div>
         </div>
 
@@ -146,9 +120,7 @@ const successMessage = ref('');
 
 const form = ref({
   account_number: '',
-  account_name: '',
   bank_name: 'Vaultly Bank',
-  bank_code: '999001',
 });
 
 const clearMessages = () => {
@@ -164,9 +136,7 @@ const clearErrors = () => {
 const resetForm = () => {
   form.value = {
     account_number: '',
-    account_name: '',
     bank_name: 'Vaultly Bank',
-    bank_code: '999001',
   };
 };
 
@@ -177,16 +147,8 @@ const validate = () => {
     newErrors.account_number = 'Account number must be 12 digits.';
   }
 
-  if (!form.value.account_name.trim()) {
-    newErrors.account_name = 'Account name is required.';
-  }
-
   if (!form.value.bank_name.trim()) {
     newErrors.bank_name = 'Bank name is required.';
-  }
-
-  if (!/^\d{3,10}$/.test(form.value.bank_code)) {
-    newErrors.bank_code = 'Bank code must be 3 to 10 digits.';
   }
 
   errors.value = newErrors;
@@ -228,9 +190,7 @@ const handleAdd = async () => {
       const serverErrors = res.data.msg;
       errors.value = {
         account_number: serverErrors.account_number?.[0],
-        account_name: serverErrors.account_name?.[0],
         bank_name: serverErrors.bank_name?.[0],
-        bank_code: serverErrors.bank_code?.[0],
       };
     } else {
       errorMessage.value = res.data.msg || 'Unable to save beneficiary.';
@@ -249,9 +209,7 @@ const startEdit = (beneficiary) => {
   editingId.value = beneficiary.id;
   form.value = {
     account_number: beneficiary.account_number,
-    account_name: beneficiary.account_name,
     bank_name: beneficiary.bank_name,
-    bank_code: beneficiary.bank_code || '999001',
   };
 };
 
@@ -289,9 +247,7 @@ const useForTransfer = (beneficiary) => {
     query: {
       beneficiaryId: String(beneficiary.id),
       accountNumber: beneficiary.account_number,
-      accountName: beneficiary.account_name,
       bankName: beneficiary.bank_name,
-      bankCode: beneficiary.bank_code || '999001',
     },
   });
 };
