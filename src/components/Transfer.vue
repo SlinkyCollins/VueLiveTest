@@ -8,7 +8,7 @@
 
       <h2 class="text-2xl font-bold text-center mb-6 text-blue-600">Transfer Money 💸</h2>
 
-      <!-- Step 1: Account Verification -->
+      <!-- Step 1: Beneficiary/Recipient Details -->
       <form v-if="step === 1" @submit.prevent="handleVerify" class="space-y-4">
         <div class="bg-gray-50 rounded-lg p-4 text-center">
           <p class="text-sm text-gray-500">Available Balance</p>
@@ -94,7 +94,7 @@
           type="submit"
           class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="verifying"
-        >{{ verifying ? 'Verifying...' : 'Verify Account' }}</button>
+        >{{ verifying ? 'Verifying...' : (selectedBeneficiaryId ? 'Confirm Transfer' : 'Verify Account') }}</button>
 
         <p v-if="errorMessage" class="text-red-600 text-center text-sm mt-3">{{ errorMessage }}</p>
       </form>
@@ -281,6 +281,21 @@ const handleVerify = async () => {
   errorMessage.value = '';
   successMessage.value = '';
   if (!validateStep1()) return;
+
+  // Saved beneficiary path: skip account verification API and go straight to confirmation.
+  if (selectedBeneficiaryId.value) {
+    const selected = beneficiaries.value.find((item) => item.id === Number(selectedBeneficiaryId.value));
+
+    if (!selected) {
+      errorMessage.value = 'Saved beneficiary not found. Please select again.';
+      return;
+    }
+
+    form.value.account_number = selected.account_number;
+    verifiedName.value = selected.account_name;
+    step.value = 2;
+    return;
+  }
 
   verifying.value = true;
 
