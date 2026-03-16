@@ -197,16 +197,25 @@ onMounted(async () => {
   if (!authStore.user) {
     try {
       await authStore.fetchDashboard();
-    } catch {
-      router.push({ name: 'Login' });
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        router.push({ name: 'Login' });
+        return;
+      }
+
+      errorMessage.value = 'Unable to load your account details. Please try again.';
       return;
     }
   }
   // Refresh balance from lightweight endpoint
   try {
     await authStore.fetchBalance();
-  } catch {
-    // Dashboard data is still usable if balance fetch fails
+  } catch (err) {
+    if (err?.response?.status === 401) {
+      router.push({ name: 'Login' });
+      return;
+    }
+    errorMessage.value = 'Unable to refresh your balance right now.';
   }
 
   if (route.query.beneficiaryId) {
@@ -224,8 +233,13 @@ const fetchBeneficiaries = async () => {
   try {
     const res = await api.get('/beneficiaries');
     beneficiaries.value = res.data.beneficiaries || [];
-  } catch {
+  } catch (err) {
     beneficiaries.value = [];
+    if (err.code === 'ERR_NETWORK') {
+      errorMessage.value = 'Unable to load saved beneficiaries. Please check your connection.';
+    } else {
+      errorMessage.value = 'Unable to load saved beneficiaries. Please try again later.';
+    }
   } finally {
     loadingBeneficiaries.value = false;
   }

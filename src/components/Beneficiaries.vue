@@ -256,8 +256,12 @@ onMounted(async () => {
   if (!authStore.user) {
     try {
       await authStore.fetchDashboard();
-    } catch {
-      router.push({ name: 'Login' });
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        router.push({ name: 'Login' });
+        return;
+      }
+      errorMessage.value = 'Unable to load your account details. Please try again.';
       return;
     }
   }

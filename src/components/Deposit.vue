@@ -66,16 +66,28 @@ onMounted(async () => {
   if (!authStore.user) {
     try {
       await authStore.fetchDashboard();
-    } catch {
-      router.push({ name: 'Login' });
+    } catch (err) {
+      // Redirect only when authentication is invalid
+      if (err?.response?.status === 401) {
+        router.push({ name: 'Login' });
+        return;
+      }
+
+      // Keep user on page for transient/server errors
+      errorMessage.value = 'Unable to load your account details. Please try again.';
       return;
     }
   }
-  // Refresh balance from lightweight endpoint
+
   try {
     await authStore.fetchBalance();
-  } catch {
-    // Dashboard data is still usable if balance fetch fails
+  } catch (err) {
+    // Don't force logout on non-auth errors
+    if (err?.response?.status === 401) {
+      router.push({ name: 'Login' });
+      return;
+    }
+    errorMessage.value = 'Unable to refresh your balance right now.';
   }
 });
 
