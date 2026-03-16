@@ -19,9 +19,11 @@
             <label class="block text-gray-700 font-medium">Account Number</label>
             <input
               v-model="form.account_number"
-              @input="clearErrors"
+              @input="onAccountNumberInput"
               type="text"
               maxlength="12"
+              inputmode="numeric"
+              pattern="[0-9]{12}"
               class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               :class="{ 'border-red-500': errors.account_number }"
               placeholder="12-digit account number"
@@ -106,9 +108,11 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
+import { useInputNormalization } from '@/composables/useInputNormalization';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { normalizeFieldDigits } = useInputNormalization();
 
 const loading = ref(true);
 const submitting = ref(false);
@@ -131,6 +135,11 @@ const clearMessages = () => {
 const clearErrors = () => {
   errors.value = {};
   clearMessages();
+};
+
+const onAccountNumberInput = () => {
+  normalizeFieldDigits(form, 'account_number', 12);
+  clearErrors();
 };
 
 const resetForm = () => {

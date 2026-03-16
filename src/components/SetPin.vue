@@ -14,7 +14,7 @@
           <label class="block text-gray-700 font-medium">PIN</label>
           <input
             v-model="pin"
-            @input="clearErrors"
+            @input="onPinInput"
             type="password"
             maxlength="4"
             inputmode="numeric"
@@ -29,7 +29,7 @@
           <label class="block text-gray-700 font-medium">Confirm PIN</label>
           <input
             v-model="pinConfirmation"
-            @input="clearErrors"
+            @input="onPinConfirmationInput"
             type="password"
             maxlength="4"
             inputmode="numeric"
@@ -58,9 +58,11 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
+import { useInputNormalization } from '@/composables/useInputNormalization';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { normalizeRefDigits } = useInputNormalization();
 
 const pin = ref('');
 const pinConfirmation = ref('');
@@ -88,6 +90,16 @@ onMounted(async () => {
 const clearErrors = () => {
   errors.value = {};
   errorMessage.value = '';
+};
+
+const onPinInput = () => {
+  normalizeRefDigits(pin, 4);
+  clearErrors();
+};
+
+const onPinConfirmationInput = () => {
+  normalizeRefDigits(pinConfirmation, 4);
+  clearErrors();
 };
 
 const validate = () => {

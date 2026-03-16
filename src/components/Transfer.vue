@@ -45,9 +45,11 @@
           <label class="block text-gray-700 font-medium">Recipient Account Number</label>
           <input
             v-model="form.account_number"
-            @input="clearErrors"
+            @input="onAccountNumberInput"
             type="text"
             maxlength="12"
+            inputmode="numeric"
+            pattern="[0-9]{12}"
             placeholder="Enter 12-digit account number"
             class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             :class="{ 'border-red-500': errors.account_number }"
@@ -136,6 +138,7 @@
           <label class="block text-gray-700 font-medium text-sm">Transaction PIN</label>
           <input
             v-model="pin"
+            @input="onPinInput"
             type="password"
             maxlength="4"
             inputmode="numeric"
@@ -170,10 +173,12 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
+import { useInputNormalization } from '@/composables/useInputNormalization';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const { normalizeFieldDigits, normalizeRefDigits } = useInputNormalization();
 
 const step = ref(1);
 const form = ref({
@@ -207,7 +212,7 @@ onMounted(async () => {
       return;
     }
   }
-  // Refresh balance from lightweight endpoint
+
   try {
     await authStore.fetchBalance();
   } catch (err) {
@@ -265,13 +270,23 @@ const clearErrors = () => {
   successMessage.value = '';
 };
 
+const onAccountNumberInput = () => {
+  normalizeFieldDigits(form, 'account_number', 12);
+  clearErrors();
+};
+
+const onPinInput = () => {
+  normalizeRefDigits(pin, 4);
+  clearErrors();
+};
+
 const validateStep1 = () => {
   const newErrors = {};
 
   if (!form.value.account_number) {
     newErrors.account_number = 'Account number is required.';
-  } else if (form.value.account_number.length !== 12) {
-    newErrors.account_number = 'Account number must be 12 digits.';
+  } else if (!/^\d{12}$/.test(form.value.account_number)) {
+    newErrors.account_number = 'Account number must be exactly 12 digits.';
   }
 
   const amount = Number(form.value.amount);
@@ -296,7 +311,6 @@ const handleVerify = async () => {
   successMessage.value = '';
   if (!validateStep1()) return;
 
-  // Saved beneficiary path: skip account verification API and go straight to confirmation.
   if (selectedBeneficiaryId.value) {
     const selected = beneficiaries.value.find((item) => item.id === Number(selectedBeneficiaryId.value));
 
