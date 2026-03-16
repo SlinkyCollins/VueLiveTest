@@ -39,6 +39,7 @@
               class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
             >Use</button>
           </div>
+          <p v-if="beneficiariesError" class="text-red-500 text-xs">{{ beneficiariesError }}</p>
         </div>
 
         <div>
@@ -177,7 +178,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
@@ -202,6 +203,7 @@ const errors = ref({});
 const errorMessage = ref('');
 const successMessage = ref('');
 const beneficiaries = ref([]);
+const beneficiariesError = ref('');
 const loadingBeneficiaries = ref(false);
 const selectedBeneficiaryId = ref('');
 const saveBeneficiary = ref(false);
@@ -244,33 +246,56 @@ onMounted(async () => {
 
 const fetchBeneficiaries = async () => {
   loadingBeneficiaries.value = true;
+  beneficiariesError.value = '';
 
   try {
     const res = await api.get('/beneficiaries');
     beneficiaries.value = res.data.beneficiaries || [];
+    syncSelectedBeneficiary();
   } catch (err) {
     beneficiaries.value = [];
     if (err.code === 'ERR_NETWORK') {
-      errorMessage.value = 'Unable to load saved beneficiaries. Please check your connection.';
+      beneficiariesError.value = 'Unable to load saved beneficiaries. Please check your connection.';
     } else {
-      errorMessage.value = 'Unable to load saved beneficiaries. Please try again later.';
+      beneficiariesError.value = 'Unable to load saved beneficiaries. Please try again later.';
     }
   } finally {
     loadingBeneficiaries.value = false;
   }
 };
 
-const useSavedBeneficiary = () => {
-  const id = Number(selectedBeneficiaryId.value);
-  const selected = beneficiaries.value.find((item) => item.id === id);
+const syncSelectedBeneficiary = () => {
+  if (!selectedBeneficiaryId.value) {
+    return null;
+  }
+
+  const selected = beneficiaries.value.find((item) => item.id === Number(selectedBeneficiaryId.value));
 
   if (!selected) {
-    return;
+    return null;
   }
 
   form.value.account_number = selected.account_number;
   form.value.bank_name = selected.bank_name;
   saveBeneficiary.value = false;
+
+  return selected;
+};
+
+watch(selectedBeneficiaryId, () => {
+  const selected = syncSelectedBeneficiary();
+  if (selected) {
+    clearErrors();
+  }
+});
+
+const useSavedBeneficiary = () => {
+  const selected = syncSelectedBeneficiary();
+
+  if (!selected) {
+    return;
+  }
+
   clearErrors();
 };
 
@@ -320,21 +345,21 @@ const validateStep1 = () => {
 const handleVerify = async () => {
   errorMessage.value = '';
   successMessage.value = '';
-  if (!validateStep1()) return;
 
   if (selectedBeneficiaryId.value) {
-    const selected = beneficiaries.value.find((item) => item.id === Number(selectedBeneficiaryId.value));
+    const selected = syncSelectedBeneficiary();
 
     if (!selected) {
       errorMessage.value = 'Saved beneficiary not found. Please select again.';
       return;
     }
 
-    form.value.account_number = selected.account_number;
     verifiedName.value = selected.account_name;
     step.value = 2;
     return;
   }
+
+  if (!validateStep1()) return;
 
   verifying.value = true;
 

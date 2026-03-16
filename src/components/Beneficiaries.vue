@@ -11,7 +11,7 @@
         </button>
       </div>
 
-      <div class="bg-white rounded-xl shadow p-6 space-y-4">
+      <form @submit.prevent="handleAdd" class="bg-white rounded-xl shadow p-6 space-y-4">
         <h2 class="text-lg font-semibold text-gray-800">Add Beneficiary</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -47,13 +47,14 @@
 
         <div class="flex gap-3">
           <button
-            @click="handleAdd"
+            type="submit"
             :disabled="submitting"
             class="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
           >{{ submitting ? 'Saving...' : 'Save Beneficiary' }}</button>
 
           <button
             v-if="editingId"
+            type="button"
             @click="cancelEdit"
             class="px-5 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition"
           >Cancel Edit</button>
@@ -61,7 +62,7 @@
 
         <p v-if="successMessage" class="text-green-600 text-sm">{{ successMessage }}</p>
         <p v-if="errorMessage" class="text-red-600 text-sm">{{ errorMessage }}</p>
-      </div>
+      </form>
 
       <div class="bg-white rounded-xl shadow p-6">
         <div class="flex justify-between items-center mb-4">
