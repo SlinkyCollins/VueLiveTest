@@ -96,7 +96,7 @@
         <button
           type="submit"
           class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="verifying"
+          :disabled="verifying || (loadingBeneficiaries && !!selectedBeneficiaryId)"
         >{{ verifying ? 'Verifying...' : (selectedBeneficiaryId ? 'Confirm Transfer' : 'Verify Account') }}</button>
 
         <p v-if="errorMessage" class="text-red-600 text-center text-sm mt-3">{{ errorMessage }}</p>
@@ -319,10 +319,13 @@ const onPinInput = () => {
 const validateStep1 = () => {
   const newErrors = {};
 
-  if (!form.value.account_number) {
-    newErrors.account_number = 'Account number is required.';
-  } else if (!/^\d{12}$/.test(form.value.account_number)) {
-    newErrors.account_number = 'Account number must be exactly 12 digits.';
+  // Only require manual account number when no saved beneficiary is selected.
+  if (!selectedBeneficiaryId.value) {
+    if (!form.value.account_number) {
+      newErrors.account_number = 'Account number is required.';
+    } else if (!/^\d{12}$/.test(form.value.account_number)) {
+      newErrors.account_number = 'Account number must be exactly 12 digits.';
+    }
   }
 
   const amount = Number(form.value.amount);
@@ -347,12 +350,20 @@ const handleVerify = async () => {
   successMessage.value = '';
 
   if (selectedBeneficiaryId.value) {
+    if (loadingBeneficiaries.value) {
+      errorMessage.value = 'Loading selected beneficiary. Please wait a moment.';
+      return;
+    }
+
     const selected = syncSelectedBeneficiary();
 
     if (!selected) {
       errorMessage.value = 'Saved beneficiary not found. Please select again.';
       return;
     }
+
+    // Still validate amount (and any other relevant fields) before confirmation.
+    if (!validateStep1()) return;
 
     verifiedName.value = selected.account_name;
     step.value = 2;
