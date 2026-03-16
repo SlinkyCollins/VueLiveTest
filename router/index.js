@@ -10,6 +10,7 @@ import LogIn from "@/components/LogIn.vue";
 import SignUp from "@/components/SignUp.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import Withdraw from "@/components/Withdraw.vue";
 
 const routes = [
   {
@@ -67,6 +68,12 @@ const routes = [
     path: "/change-pin",
     name: "ChangePin",
     component: ChangePin,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/withdraw",
+    name: "Withdraw",
+    component: Withdraw,
     meta: { requiresAuth: true },
   },
 ];

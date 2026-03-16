@@ -56,6 +56,10 @@
           @click="router.push({ name: 'TransactionHistory' })"
           class="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 transition"
         >History</button>
+        <button
+          @click="router.push({ name: 'Withdraw' })"
+          class="px-6 py-3 bg-rose-600 text-white font-semibold rounded-lg hover:bg-rose-700 transition"
+        >Withdraw</button>
       </div>
 
       <!-- Security Section -->
