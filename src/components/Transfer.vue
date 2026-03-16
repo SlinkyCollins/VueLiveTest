@@ -121,18 +121,6 @@
           </div>
         </div>
 
-        <div class="flex gap-3">
-          <button
-            @click="step = 1"
-            class="w-1/2 py-2 px-4 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition"
-          >Cancel</button>
-          <button
-            @click="handleTransfer"
-            :disabled="transferring"
-            class="w-1/2 py-2 px-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >{{ transferring ? 'Sending...' : 'Send Money' }}</button>
-        </div>
-
         <!-- Transaction PIN -->
         <div>
           <label class="block text-gray-700 font-medium text-sm">Transaction PIN</label>
@@ -147,6 +135,26 @@
             :class="{ 'border-red-500': errors.pin }"
           />
           <p v-if="errors.pin" class="text-red-500 text-sm mt-1">{{ errors.pin }}</p>
+        </div>
+
+        <div v-if="!hasTransactionPin" class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+          <p class="font-medium">You need to set a transaction PIN before sending money.</p>
+          <button
+            @click="router.push({ name: 'SetPin' })"
+            class="mt-2 inline-flex rounded-lg bg-amber-500 px-3 py-2 font-semibold text-white hover:bg-amber-600 transition"
+          >Set PIN</button>
+        </div>
+
+        <div class="flex gap-3">
+          <button
+            @click="step = 1"
+            class="w-1/2 py-2 px-4 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition"
+          >Cancel</button>
+          <button
+            @click="handleTransfer"
+            :disabled="transferring || !isPinValid || !hasTransactionPin"
+            class="w-1/2 py-2 px-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >{{ transferring ? 'Sending...' : 'Send Money' }}</button>
         </div>
 
         <p v-if="errorMessage" class="text-red-600 text-center text-sm mt-3">{{ errorMessage }}</p>
@@ -169,7 +177,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
@@ -197,6 +205,8 @@ const beneficiaries = ref([]);
 const loadingBeneficiaries = ref(false);
 const selectedBeneficiaryId = ref('');
 const saveBeneficiary = ref(false);
+const isPinValid = computed(() => /^\d{4}$/.test(pin.value));
+const hasTransactionPin = computed(() => !!authStore.user?.has_pin);
 
 onMounted(async () => {
   if (!authStore.user) {
@@ -277,7 +287,8 @@ const onAccountNumberInput = () => {
 
 const onPinInput = () => {
   normalizeRefDigits(pin, 4);
-  clearErrors();
+  errors.value.pin = '';
+  errorMessage.value = '';
 };
 
 const validateStep1 = () => {
@@ -355,6 +366,11 @@ const handleVerify = async () => {
 const handleTransfer = async () => {
   errorMessage.value = '';
   successMessage.value = '';
+
+  if (!hasTransactionPin.value) {
+    errorMessage.value = 'Please set your transaction PIN before making transfers.';
+    return;
+  }
 
   if (!pin.value || !/^\d{4}$/.test(pin.value)) {
     errors.value.pin = 'Please enter your 4-digit PIN.';

@@ -136,7 +136,21 @@ const handleSetPin = async () => {
 
     if (res.data.status === '200') {
       successMessage.value = res.data.msg;
-      if (authStore.user) authStore.user.has_pin = true;
+
+      if (authStore.user) {
+        authStore.setUser({ ...authStore.user, has_pin: true });
+      }
+
+      pin.value = '';
+      pinConfirmation.value = '';
+
+      // Optional: sync from server (prefer handling errors explicitly)
+      try {
+        await authStore.fetchDashboard();
+      } catch {
+        // keep optimistic state; don't block success flow
+      }
+
       setTimeout(() => router.push({ name: 'Dashboard' }), 1500);
     } else if (res.data.status === '422') {
       const serverErrors = res.data.msg;
