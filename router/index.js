@@ -8,7 +8,7 @@ import ChangePin from "@/components/ChangePin.vue";
 import Home from "@/components/Home.vue";
 import LogIn from "@/components/LogIn.vue";
 import SignUp from "@/components/SignUp.vue";
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHistory, RouterView } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import Withdraw from "@/components/Withdraw.vue";
 
@@ -30,51 +30,78 @@ const routes = [
   },
   {
     path: "/dashboard",
-    name: "Dashboard",
-    component: DashBoard,
+    component: RouterView,
     meta: { requiresAuth: true },
+    children: [
+      {
+        path: "",
+        name: "Dashboard",
+        component: DashBoard,
+      },
+      {
+        path: "deposit",
+        name: "Deposit",
+        component: Deposit,
+      },
+      {
+        path: "transfer",
+        name: "Transfer",
+        component: Transfer,
+      },
+      {
+        path: "transactions",
+        name: "TransactionHistory",
+        component: TransactionHistory,
+      },
+      {
+        path: "beneficiaries",
+        name: "Beneficiaries",
+        component: Beneficiaries,
+      },
+      {
+        path: "set-pin",
+        name: "SetPin",
+        component: SetPin,
+      },
+      {
+        path: "change-pin",
+        name: "ChangePin",
+        component: ChangePin,
+      },
+      {
+        path: "withdraw",
+        name: "Withdraw",
+        component: Withdraw,
+      },
+    ],
   },
   {
     path: "/deposit",
-    name: "Deposit",
-    component: Deposit,
-    meta: { requiresAuth: true },
+    redirect: { name: "Deposit" },
   },
   {
     path: "/transfer",
-    name: "Transfer",
-    component: Transfer,
-    meta: { requiresAuth: true },
+    redirect: { name: "Transfer" },
   },
   {
     path: "/transactions",
-    name: "TransactionHistory",
-    component: TransactionHistory,
-    meta: { requiresAuth: true },
+    redirect: { name: "TransactionHistory" },
   },
   {
     path: "/beneficiaries",
-    name: "Beneficiaries",
-    component: Beneficiaries,
-    meta: { requiresAuth: true },
+    redirect: { name: "Beneficiaries" },
   },
   {
     path: "/set-pin",
-    name: "SetPin",
-    component: SetPin,
-    meta: { requiresAuth: true },
+    redirect: { name: "SetPin" },
   },
   {
     path: "/change-pin",
-    name: "ChangePin",
-    component: ChangePin,
-    meta: { requiresAuth: true },
+    redirect: { name: "ChangePin" },
   },
   {
     path: "/withdraw",
-    name: "Withdraw",
-    component: Withdraw,
-    meta: { requiresAuth: true },
+    redirect: { name: "Withdraw" },
   },
 ];
 
@@ -86,8 +113,9 @@ const router = createRouter({
 // Navigation guard
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  if (requiresAuth && !authStore.isAuthenticated) {
     next({ name: "Login" });
   } else if (authStore.isAuthenticated && (to.name === "Login" || to.name === "signup")) {
     next({ name: "Dashboard" });
