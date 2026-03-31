@@ -11,6 +11,7 @@ import SignUp from "@/components/SignUp.vue";
 import { createRouter, createWebHistory, RouterView } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import Withdraw from "@/components/Withdraw.vue";
+import Profile from "@/components/Profile.vue";
 
 const routes = [
   {
@@ -73,6 +74,11 @@ const routes = [
         name: "Withdraw",
         component: Withdraw,
       },
+      {
+        path: "profile",
+        name: "Profile",
+        component: Profile,
+      },
     ],
   },
   {
@@ -102,6 +108,10 @@ const routes = [
   {
     path: "/withdraw",
     redirect: { name: "Withdraw" },
+  },
+  {
+    path: "/profile",
+    redirect: { name: "Profile" },
   },
 ];
 

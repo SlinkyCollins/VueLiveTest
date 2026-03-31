@@ -60,6 +60,10 @@
           @click="router.push({ name: 'Withdraw' })"
           class="px-6 py-3 bg-rose-600 text-white font-semibold rounded-lg hover:bg-rose-700 transition"
         >Withdraw</button>
+        <button
+          @click="router.push({ name: 'Profile' })"
+          class="px-6 py-3 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition"
+        >Profile</button>
       </div>
 
       <!-- Security Section -->
