@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
     <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
       <button
-        @click="router.push({ name: 'Dashboard' })"
+        @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
         class="text-blue-600 text-sm font-medium hover:underline mb-4 inline-block"
       >&larr; Back to Dashboard</button>
 
@@ -141,7 +141,7 @@
         <div v-if="!hasTransactionPin" class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
           <p class="font-medium">You need to set a transaction PIN before sending money.</p>
           <button
-            @click="router.push({ name: 'SetPin' })"
+            @click="router.push({ name: 'SetPin', params: { userId: String(route.params.userId) } })"
             class="mt-2 inline-flex rounded-lg bg-amber-500 px-3 py-2 font-semibold text-white hover:bg-amber-600 transition"
           >Set PIN</button>
         </div>
@@ -169,7 +169,7 @@
         <p class="text-sm text-gray-400">New balance: ₦{{ Number(authStore.user.balance).toLocaleString('en-NG', { minimumFractionDigits: 2 }) }}</p>
         <p v-if="successMessage" class="text-green-600 text-sm">{{ successMessage }}</p>
         <button
-          @click="router.push({ name: 'Dashboard' })"
+          @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
           class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
         >Back to Dashboard</button>
       </div>

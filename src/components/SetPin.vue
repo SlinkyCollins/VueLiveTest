@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
     <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
       <button
-        @click="router.push({ name: 'Dashboard' })"
+        @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
         class="text-blue-600 text-sm font-medium hover:underline mb-4 inline-block"
       >&larr; Back to Dashboard</button>
 
@@ -55,12 +55,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import { useInputNormalization } from '@/composables/useInputNormalization';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const { normalizeRefDigits } = useInputNormalization();
 
@@ -83,7 +84,7 @@ onMounted(async () => {
 
   // Redirect if PIN already set
   if (authStore.user?.has_pin) {
-    router.push({ name: 'ChangePin' });
+    router.push({ name: 'ChangePin', params: { userId: String(route.params.userId) } });
   }
 });
 
@@ -151,7 +152,7 @@ const handleSetPin = async () => {
         // keep optimistic state; don't block success flow
       }
 
-      setTimeout(() => router.push({ name: 'Dashboard' }), 1500);
+      setTimeout(() => router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } }), 1500);
     } else if (res.data.status === '422') {
       const serverErrors = res.data.msg;
       if (serverErrors.pin) errors.value.pin = serverErrors.pin[0];

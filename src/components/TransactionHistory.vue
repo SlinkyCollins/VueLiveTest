@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="flex justify-between items-center">
         <h1 class="text-2xl font-bold text-gray-800">Transaction History</h1>
-        <button @click="router.push({ name: 'Dashboard' })"
+        <button @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
           class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition">← Back
           to Dashboard</button>
       </div>
@@ -28,7 +28,7 @@
 
       <!-- Transaction List -->
       <div v-else class="space-y-3">
-        <div v-for="tx in transactions" :key="tx.id"
+        <div v-for="tx in transactions" :key="tx.transaction_reference || tx.id"
           class="bg-white rounded-xl shadow p-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
             <!-- Direction Icon -->
@@ -40,7 +40,11 @@
             </div>
             <div>
               <p class="font-semibold text-gray-800 capitalize">{{ tx.type }}</p>
+              <p class="text-xs text-gray-500">Ref: {{ tx.transaction_reference || `TX-${tx.id}` }}</p>
+              <p class="text-xs text-gray-500">Txn ID: {{ tx.transaction_id || tx.id }}</p>
               <p class="text-xs text-gray-500">{{ formatDate(tx.created_at) }}</p>
+              <p class="text-xs text-gray-500">From: {{ tx.sender_account_name }} ({{ tx.sender_account_number }})</p>
+              <p class="text-xs text-gray-500">To: {{ tx.recipient_account_name }} ({{ tx.recipient_account_number }})</p>
             </div>
           </div>
           <div class="text-right">
@@ -67,11 +71,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const transactions = ref([]);

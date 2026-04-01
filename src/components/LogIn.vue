@@ -120,7 +120,7 @@ const handleLogin = async () => {
       authStore.setAuth(res.data.access_token, res.data.user);
 
       setTimeout(() => {
-        router.push({ name: "Dashboard" });
+        router.push({ name: "Dashboard", params: { userId: String(res.data.user.id) } });
       }, 1000);
     } else if (res.data.status === "401") {
       errorMessage.value = res.data.msg;

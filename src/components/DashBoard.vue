@@ -41,27 +41,27 @@
       <!-- Quick Actions -->
       <div class="flex gap-3 flex-wrap">
         <button
-          @click="router.push({ name: 'Deposit' })"
+          @click="router.push({ name: 'Deposit', params: { userId: String(user.id) } })"
           class="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition"
         >+ Add Money</button>
         <button
-          @click="router.push({ name: 'Transfer' })"
+          @click="router.push({ name: 'Transfer', params: { userId: String(user.id) } })"
           class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
         >Transfer</button>
         <button
-          @click="router.push({ name: 'Beneficiaries' })"
+          @click="router.push({ name: 'Beneficiaries', params: { userId: String(user.id) } })"
           class="px-6 py-3 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition"
         >Beneficiaries</button>
         <button
-          @click="router.push({ name: 'TransactionHistory' })"
+          @click="router.push({ name: 'TransactionHistory', params: { userId: String(user.id) } })"
           class="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 transition"
         >History</button>
         <button
-          @click="router.push({ name: 'Withdraw' })"
+          @click="router.push({ name: 'Withdraw', params: { userId: String(user.id) } })"
           class="px-6 py-3 bg-rose-600 text-white font-semibold rounded-lg hover:bg-rose-700 transition"
         >Withdraw</button>
         <button
-          @click="router.push({ name: 'Profile' })"
+          @click="router.push({ name: 'Profile', params: { userId: String(user.id) } })"
           class="px-6 py-3 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition"
         >Profile</button>
       </div>
@@ -72,12 +72,12 @@
         <div class="flex gap-3">
           <button
             v-if="!user.has_pin"
-            @click="router.push({ name: 'SetPin' })"
+            @click="router.push({ name: 'SetPin', params: { userId: String(user.id) } })"
             class="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition"
           >Set Transaction PIN</button>
           <button
             v-else
-            @click="router.push({ name: 'ChangePin' })"
+            @click="router.push({ name: 'ChangePin', params: { userId: String(user.id) } })"
             class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
           >Change PIN</button>
         </div>

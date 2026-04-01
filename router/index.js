@@ -8,6 +8,7 @@ import ChangePin from "@/components/ChangePin.vue";
 import Home from "@/components/Home.vue";
 import LogIn from "@/components/LogIn.vue";
 import SignUp from "@/components/SignUp.vue";
+import NotFound from "@/components/NotFound.vue";
 import { createRouter, createWebHistory, RouterView } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import Withdraw from "@/components/Withdraw.vue";
@@ -30,7 +31,7 @@ const routes = [
     component: LogIn,
   },
   {
-    path: "/dashboard",
+    path: "/dashboard/:userId",
     component: RouterView,
     meta: { requiresAuth: true },
     children: [
@@ -82,36 +83,9 @@ const routes = [
     ],
   },
   {
-    path: "/deposit",
-    redirect: { name: "Deposit" },
-  },
-  {
-    path: "/transfer",
-    redirect: { name: "Transfer" },
-  },
-  {
-    path: "/transactions",
-    redirect: { name: "TransactionHistory" },
-  },
-  {
-    path: "/beneficiaries",
-    redirect: { name: "Beneficiaries" },
-  },
-  {
-    path: "/set-pin",
-    redirect: { name: "SetPin" },
-  },
-  {
-    path: "/change-pin",
-    redirect: { name: "ChangePin" },
-  },
-  {
-    path: "/withdraw",
-    redirect: { name: "Withdraw" },
-  },
-  {
-    path: "/profile",
-    redirect: { name: "Profile" },
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: NotFound,
   },
 ];
 
@@ -121,17 +95,84 @@ const router = createRouter({
 });
 
 // Navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore();
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+  const isAuthPage = to.name === "Login" || to.name === "signup";
+
+  // Safe-guard: if token exists but user state is empty on Login/Signup,
+  // hydrate once so we can redirect authenticated users away from auth pages.
+  if (isAuthPage && authStore.isAuthenticated && !authStore.user) {
+    try {
+      await authStore.fetchDashboard();
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        authStore.clearAuth();
+        return true;
+      }
+
+      // Deterministic fallback for transient errors: route to Home with retry hint.
+      return {
+        name: "home",
+        query: {
+          authRetry: "1",
+          retryFrom: String(to.name || "auth"),
+        },
+        replace: true,
+      };
+    }
+  }
 
   if (requiresAuth && !authStore.isAuthenticated) {
-    next({ name: "Login" });
-  } else if (authStore.isAuthenticated && (to.name === "Login" || to.name === "signup")) {
-    next({ name: "Dashboard" });
-  } else {
-    next();
+    return { name: "Login" };
   }
+
+  // Hydrate user on refresh so :userId ownership checks can be enforced when possible.
+  if (requiresAuth && authStore.isAuthenticated && !authStore.user) {
+    try {
+      await authStore.fetchDashboard();
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        authStore.clearAuth();
+        return { name: "Login" };
+      }
+
+      // Deterministic fallback for transient errors on protected routes.
+      return {
+        name: "home",
+        query: {
+          authRetry: "1",
+          retryFrom: String(to.name || "protected"),
+        },
+        replace: true,
+      };
+    }
+  }
+
+  const authUserId = authStore.user?.id ? String(authStore.user.id) : null;
+  const hasUserIdParam = typeof to.params.userId !== "undefined";
+  const routeUserId = hasUserIdParam ? String(to.params.userId) : null;
+
+  if (authStore.isAuthenticated && isAuthPage) {
+    if (authUserId) {
+      return { name: "Dashboard", params: { userId: authUserId } };
+    }
+
+    return true;
+  }
+
+  // Enforce ownership only on routes that explicitly include :userId.
+  if (requiresAuth && hasUserIdParam && authUserId && routeUserId !== authUserId) {
+    return {
+      name: to.name,
+      params: { ...to.params, userId: authUserId },
+      query: to.query,
+      hash: to.hash,
+      replace: true,
+    };
+  }
+
+  return true;
 });
 
 export default router;
