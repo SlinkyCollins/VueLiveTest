@@ -28,7 +28,7 @@
 
       <!-- Transaction List -->
       <div v-else class="space-y-3">
-        <div v-for="tx in transactions" :key="tx.transaction_reference || tx.id"
+        <div v-for="tx in transactions" :key="tx.transaction_reference"
           class="bg-white rounded-xl shadow p-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
             <!-- Direction Icon -->
@@ -40,8 +40,7 @@
             </div>
             <div>
               <p class="font-semibold text-gray-800 capitalize">{{ tx.type }}</p>
-              <p class="text-xs text-gray-500">Ref: {{ tx.transaction_reference || `TX-${tx.id}` }}</p>
-              <p class="text-xs text-gray-500">Txn ID: {{ tx.transaction_id || tx.id }}</p>
+              <p class="text-xs text-gray-500">Ref: {{ tx.transaction_reference }}</p>
               <p class="text-xs text-gray-500">{{ formatDate(tx.created_at) }}</p>
               <p class="text-xs text-gray-500">From: {{ tx.sender_account_name }} ({{ tx.sender_account_number }})</p>
               <p class="text-xs text-gray-500">To: {{ tx.recipient_account_name }} ({{ tx.recipient_account_number }})</p>

@@ -136,8 +136,6 @@ const handleSetPin = async () => {
     });
 
     if (res.data.status === '200') {
-      successMessage.value = res.data.msg;
-
       if (authStore.user) {
         authStore.setUser({ ...authStore.user, has_pin: true });
       }
@@ -152,7 +150,11 @@ const handleSetPin = async () => {
         // keep optimistic state; don't block success flow
       }
 
-      setTimeout(() => router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } }), 1500);
+      router.push({
+        name: 'Dashboard',
+        params: { userId: String(route.params.userId) },
+        query: { pinSet: '1' },
+      });
     } else if (res.data.status === '422') {
       const serverErrors = res.data.msg;
       if (serverErrors.pin) errors.value.pin = serverErrors.pin[0];

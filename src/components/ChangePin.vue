@@ -168,11 +168,14 @@ const handleChangePin = async () => {
     });
 
     if (res.data.status === '200') {
-      successMessage.value = res.data.msg;
       currentPin.value = '';
       newPin.value = '';
       newPinConfirmation.value = '';
-      setTimeout(() => router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } }), 1500);
+      router.push({
+        name: 'Dashboard',
+        params: { userId: String(route.params.userId) },
+        query: { pinChanged: '1' },
+      });
     } else if (res.data.status === '422') {
       const serverErrors = res.data.msg;
       if (serverErrors.current_pin) errors.value.current_pin = serverErrors.current_pin[0];

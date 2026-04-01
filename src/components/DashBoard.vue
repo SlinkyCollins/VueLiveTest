@@ -13,6 +13,13 @@
 
     <!-- Dashboard Content -->
     <div v-else-if="user" class="max-w-4xl mx-auto space-y-6">
+      <div
+        v-if="flashSuccessMessage"
+        class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+      >
+        {{ flashSuccessMessage }}
+      </div>
+
       <div class="flex justify-between items-center">
         <h1 class="text-2xl font-bold text-gray-800">Welcome, {{ user.name }}!</h1>
         <button
@@ -112,14 +119,16 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 
 const loading = ref(true);
 const errorMessage = ref('');
 const loggingOut = ref(false);
+const flashSuccessMessage = ref('');
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const user = computed(() => authStore.user);
@@ -160,7 +169,33 @@ const fetchDashboard = async () => {
   }
 };
 
-onMounted(fetchDashboard);
+onMounted(async () => {
+  if (route.query.pinSet === '1') {
+    flashSuccessMessage.value = 'Transaction PIN set successfully.';
+
+    const nextQuery = { ...route.query };
+    delete nextQuery.pinSet;
+
+    router.replace({
+      name: 'Dashboard',
+      params: { userId: String(route.params.userId) },
+      query: nextQuery,
+    });
+  } else if (route.query.pinChanged === '1') {
+    flashSuccessMessage.value = 'Transaction PIN changed successfully.';
+
+    const nextQuery = { ...route.query };
+    delete nextQuery.pinChanged;
+
+    router.replace({
+      name: 'Dashboard',
+      params: { userId: String(route.params.userId) },
+      query: nextQuery,
+    });
+  }
+
+  await fetchDashboard();
+});
 </script>
 
 <style></style>
