@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="flex justify-between items-center">
         <h1 class="text-2xl font-bold text-gray-800">Transaction History</h1>
-        <button @click="router.push({ name: 'Dashboard' })"
+        <button @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
           class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition">← Back
           to Dashboard</button>
       </div>
@@ -67,11 +67,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const transactions = ref([]);

@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
     <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
       <button
-        @click="router.push({ name: 'Dashboard' })"
+        @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
         class="text-blue-600 text-sm font-medium hover:underline mb-4 inline-block"
       >&larr; Back to Dashboard</button>
 
@@ -61,12 +61,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import { useInputNormalization } from '@/composables/useInputNormalization';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const { normalizeRefDigits } = useInputNormalization();
 

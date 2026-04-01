@@ -4,7 +4,7 @@
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-800">Profile</h1>
         <button
-          @click="router.push({ name: 'Dashboard' })"
+          @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
           class="px-4 py-2 bg-gray-700 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition"
         >Back to Dashboard</button>
       </div>
@@ -139,11 +139,12 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const loading = ref(true);
