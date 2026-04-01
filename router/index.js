@@ -98,6 +98,30 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const authStore = useAuthStore();
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+  const isAuthPage = to.name === "Login" || to.name === "signup";
+
+  // Safe-guard: if token exists but user state is empty on Login/Signup,
+  // hydrate once so we can redirect authenticated users away from auth pages.
+  if (isAuthPage && authStore.isAuthenticated && !authStore.user) {
+    try {
+      await authStore.fetchDashboard();
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        authStore.clearAuth();
+        return true;
+      }
+
+      // Deterministic fallback for transient errors: route to Home with retry hint.
+      return {
+        name: "home",
+        query: {
+          authRetry: "1",
+          retryFrom: String(to.name || "auth"),
+        },
+        replace: true,
+      };
+    }
+  }
 
   if (requiresAuth && !authStore.isAuthenticated) {
     return { name: "Login" };
@@ -113,8 +137,15 @@ router.beforeEach(async (to) => {
         return { name: "Login" };
       }
 
-      // For non-401 failures (network/server hiccup), proceed and let page-level retry UI handle it.
-      return true;
+      // Deterministic fallback for transient errors on protected routes.
+      return {
+        name: "home",
+        query: {
+          authRetry: "1",
+          retryFrom: String(to.name || "protected"),
+        },
+        replace: true,
+      };
     }
   }
 
@@ -122,7 +153,7 @@ router.beforeEach(async (to) => {
   const hasUserIdParam = typeof to.params.userId !== "undefined";
   const routeUserId = hasUserIdParam ? String(to.params.userId) : null;
 
-  if (authStore.isAuthenticated && (to.name === "Login" || to.name === "signup")) {
+  if (authStore.isAuthenticated && isAuthPage) {
     if (authUserId) {
       return { name: "Dashboard", params: { userId: authUserId } };
     }
