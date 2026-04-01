@@ -57,8 +57,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from "vue-router";
+import { ref, onMounted } from 'vue';
+import { useRoute, useRouter } from "vue-router";
 import { Switch } from '@headlessui/vue';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
@@ -73,7 +73,22 @@ const errors = ref({});
 const errorMessage = ref("");
 const successMessage = ref("");
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
+
+onMounted(() => {
+  if (route.query.signupSuccess === '1') {
+    successMessage.value = 'Signup successful. Please log in.';
+
+    const nextQuery = { ...route.query };
+    delete nextQuery.signupSuccess;
+
+    router.replace({
+      name: 'Login',
+      query: nextQuery,
+    });
+  }
+});
 
 const clearFieldError = (field) => {
   if (errors.value[field]) {
@@ -119,9 +134,11 @@ const handleLogin = async () => {
       // Store token and user in Pinia
       authStore.setAuth(res.data.access_token, res.data.user);
 
-      setTimeout(() => {
-        router.push({ name: "Dashboard", params: { userId: String(res.data.user.id) } });
-      }, 1000);
+      router.push({
+        name: "Dashboard",
+        params: { userId: String(res.data.user.id) },
+        query: { loginSuccess: '1' },
+      });
     } else if (res.data.status === "401") {
       errorMessage.value = res.data.msg;
     } else if (res.data.status === "422") {

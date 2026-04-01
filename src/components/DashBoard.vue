@@ -171,7 +171,7 @@ const fetchDashboard = async () => {
 
 onMounted(async () => {
   if (route.query.pinSet === '1') {
-    flashSuccessMessage.value = 'Transaction PIN set successfully.';
+    flashSuccessMessage.value = 'PIN set successfully.';
 
     const nextQuery = { ...route.query };
     delete nextQuery.pinSet;
@@ -182,10 +182,21 @@ onMounted(async () => {
       query: nextQuery,
     });
   } else if (route.query.pinChanged === '1') {
-    flashSuccessMessage.value = 'Transaction PIN changed successfully.';
+    flashSuccessMessage.value = 'PIN changed successfully.';
 
     const nextQuery = { ...route.query };
     delete nextQuery.pinChanged;
+
+    router.replace({
+      name: 'Dashboard',
+      params: { userId: String(route.params.userId) },
+      query: nextQuery,
+    });
+  } else if (route.query.loginSuccess === '1') {
+    flashSuccessMessage.value = 'Login successful.';
+
+    const nextQuery = { ...route.query };
+    delete nextQuery.loginSuccess;
 
     router.replace({
       name: 'Dashboard',

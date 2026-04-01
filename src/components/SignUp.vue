@@ -132,10 +132,11 @@ const submitForm = async () => {
     });
 
     if (res.data.status === "200") {
-      successMessage.value = res.data.msg;
-      setTimeout(() => {
-        router.push({ name: "Login" });
-      }, 1500);
+      successMessage.value = "Signup successful.";
+      router.push({
+        name: "Login",
+        query: { signupSuccess: "1" },
+      });
     } else if (res.data.status === "422") {
       errors.value = res.data.msg; // Laravel validation errors
     } else {
