@@ -41,7 +41,10 @@
             <div>
               <p class="font-semibold text-gray-800 capitalize">{{ tx.type }}</p>
               <p class="text-xs text-gray-500">Ref: {{ tx.transaction_reference || `TX-${tx.id}` }}</p>
+              <p class="text-xs text-gray-500">Txn ID: {{ tx.transaction_id || tx.id }}</p>
               <p class="text-xs text-gray-500">{{ formatDate(tx.created_at) }}</p>
+              <p class="text-xs text-gray-500">From: {{ tx.sender_account_name }} ({{ tx.sender_account_number }})</p>
+              <p class="text-xs text-gray-500">To: {{ tx.recipient_account_name }} ({{ tx.recipient_account_number }})</p>
             </div>
           </div>
           <div class="text-right">
