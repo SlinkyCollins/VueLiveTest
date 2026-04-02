@@ -1,24 +1,37 @@
 <template>
-  <div>
-    Hello Home
+  <div class="min-h-screen flex justify-center items-center bg-gray-50 p-6">
+    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
+      <h1 class="text-2xl font-bold text-center mb-3 text-blue-600">Vaultly</h1>
+      <p class="text-gray-600 text-center text-sm mb-6">
+        A simple way to manage your money.
+        Deposit, transfer, and track your transactions in one place.
+      </p>
 
-    <div class="mt-5 card flex justify-center">
-      <Slider v-model="value" class="w-56" />
+      <div class="space-y-3">
+        <button
+          type="button"
+          class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+          @click="router.push({ name: 'Login' })"
+        >
+          Login
+        </button>
+
+        <button
+          type="button"
+          class="w-full py-2 px-4 bg-white border border-blue-600 text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition"
+          @click="router.push({ name: 'signup' })"
+        >
+          Create Account
+        </button>
+      </div>
     </div>
-
-    <div class="card flex justify-center">
-      <Button label="Submit" />
-    </div>
-
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import Slider from 'primevue/slider';
-import Button from 'primevue/button';
+import { useRouter } from 'vue-router';
 
-const value = ref(null);
+const router = useRouter();
 </script>
 
 <style></style>
