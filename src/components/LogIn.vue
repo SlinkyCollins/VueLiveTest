@@ -8,38 +8,24 @@
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div>
           <label for="email" class="block text-gray-700 font-medium">Email</label>
-          <input
-            id="email"
-            v-model="form.email"
-            @input="clearFieldError('email')"
-            placeholder="you@mail.com"
-            type="email"
-            name="email"
+          <input id="email" v-model="form.email" @input="clearFieldError('email')" placeholder="you@mail.com"
+            type="email" name="email"
             class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            :class="{ 'border-red-500': errors.email }"
-          />
+            :class="{ 'border-red-500': errors.email }" />
           <p v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</p>
         </div>
         <div>
           <label for="password" class="block text-gray-700 font-medium">Password</label>
-          <input
-            id="password"
-            v-model="form.password"
-            @input="clearFieldError('password')"
-            placeholder="••••••••"
-            type="password"
-            name="password"
+          <input id="password" v-model="form.password" @input="clearFieldError('password')" placeholder="••••••••"
+            type="password" name="password"
             class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            :class="{ 'border-red-500': errors.password }"
-          />
+            :class="{ 'border-red-500': errors.password }" />
           <p v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password }}</p>
         </div>
 
-        <button
-          type="submit"
+        <button type="submit"
           class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="loading"
-        >{{ loading ? 'Logging in...' : 'Log in' }}</button>
+          :disabled="loading">{{ loading ? 'Logging in...' : 'Log in' }}</button>
 
         <p v-if="errorMessage" class="text-red-600 text-center text-sm mt-3">{{ errorMessage }}</p>
         <p v-if="successMessage" class="text-green-600 text-center text-sm mt-3">{{ successMessage }}</p>
@@ -53,6 +39,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from "vue-router";
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
+
 
 const form = ref({
   email: "",
