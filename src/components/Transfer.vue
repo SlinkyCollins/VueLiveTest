@@ -1,180 +1,212 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
-      <button
-        @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
-        class="text-blue-600 text-sm font-medium hover:underline mb-4 inline-block"
-      >&larr; Back to Dashboard</button>
+  <PageWrapper narrow>
+    <div class="page-stack">
+      <SectionHeader
+        title="Transfer"
+        subtitle="Send money to another Vaultly account with a verified recipient."
+        eyebrow="Payments"
+      >
+        <template #actions>
+          <button
+            class="btn-secondary"
+            @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
+          >
+            <span class="pi pi-arrow-left text-sm" />
+            Back to dashboard
+          </button>
+        </template>
+      </SectionHeader>
 
-      <h2 class="text-2xl font-bold text-center mb-6 text-blue-600">Transfer Money 💸</h2>
-
-      <!-- Step 1: Beneficiary/Recipient Details -->
-      <form v-if="step === 1" @submit.prevent="handleVerify" class="space-y-4">
-        <div class="bg-gray-50 rounded-lg p-4 text-center">
-          <p class="text-sm text-gray-500">Available Balance</p>
-          <p class="text-2xl font-bold text-blue-600">
-            ₦{{ authStore.user ? Number(authStore.user.balance).toLocaleString('en-NG', { minimumFractionDigits: 2 }) : '0.00' }}
-          </p>
-        </div>
-
-        <div class="bg-white border rounded-lg p-4 space-y-3">
-          <div class="flex justify-between items-center">
-            <p class="text-sm font-medium text-gray-700">Use Saved Beneficiary (Optional)</p>
-            <span v-if="loadingBeneficiaries" class="text-xs text-gray-500">Loading...</span>
+      <FormCard
+        v-if="step === 1"
+        title="Transfer details"
+        subtitle="Enter the recipient account number, amount, and optional beneficiary preference."
+      >
+        <form @submit.prevent="handleVerify" class="form-stack">
+          <div class="surface-muted text-center">
+            <p class="stat-label">Available balance</p>
+            <p class="mt-2 text-3xl font-semibold tracking-tight text-brand-700">
+              {{ formatCurrency(authStore.user?.balance) }}
+            </p>
           </div>
 
-          <div class="flex gap-2">
-            <select
+          <div class="section-card section-stack">
+            <div class="flex items-center justify-between gap-4">
+              <div class="space-y-1">
+                <h3 class="section-title">Saved beneficiary</h3>
+                <p class="section-subtitle">Optional. Choose an existing recipient to prefill the transfer.</p>
+              </div>
+              <span v-if="loadingBeneficiaries" class="badge-muted">Loading...</span>
+            </div>
+
+            <Select
               v-model="selectedBeneficiaryId"
-              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            >
-              <option value="">Select a saved beneficiary</option>
-              <option v-for="item in beneficiaries" :key="item.id" :value="String(item.id)">
-                {{ item.account_name }} - {{ item.account_number }}
-              </option>
-            </select>
-            <button
-              type="button"
-              @click="useSavedBeneficiary"
-              class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-            >Use</button>
+              :options="beneficiaryOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select a saved beneficiary"
+              class="w-full"
+              :loading="loadingBeneficiaries"
+              showClear
+            />
+
+            <div v-if="selectedBeneficiaryId" class="alert-info">
+              Saved beneficiary selected. Recipient details are filled automatically.
+            </div>
+            <p v-if="beneficiariesError" class="field-error">{{ beneficiariesError }}</p>
           </div>
-          <p v-if="beneficiariesError" class="text-red-500 text-xs">{{ beneficiariesError }}</p>
-        </div>
 
-        <div>
-          <label class="block text-gray-700 font-medium">Recipient Account Number</label>
-          <input
-            v-model="form.account_number"
-            @input="onAccountNumberInput"
-            type="text"
-            maxlength="12"
-            inputmode="numeric"
-            pattern="[0-9]{12}"
-            placeholder="Enter 12-digit account number"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            :class="{ 'border-red-500': errors.account_number }"
-          />
-          <p v-if="errors.account_number" class="text-red-500 text-sm mt-1">{{ errors.account_number }}</p>
-        </div>
+          <div>
+            <label class="field-label">Recipient account number</label>
+            <InputText
+              v-model="form.account_number"
+              type="text"
+              maxlength="12"
+              inputmode="numeric"
+              placeholder="Enter 12-digit account number"
+              :disabled="!!selectedBeneficiaryId"
+              :class="{ 'p-invalid': errors.account_number }"
+              @input="onAccountNumberInput"
+            />
+            <p v-if="errors.account_number" class="field-error">{{ errors.account_number }}</p>
+          </div>
 
-        <div>
-          <label class="block text-gray-700 font-medium">Amount (₦)</label>
-          <input
-            v-model="form.amount"
-            @input="clearErrors"
-            type="number"
-            min="100"
-            step="0.01"
-            placeholder="Enter amount (min ₦100)"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            :class="{ 'border-red-500': errors.amount }"
-          />
-          <p v-if="errors.amount" class="text-red-500 text-sm mt-1">{{ errors.amount }}</p>
-        </div>
+          <div>
+            <label class="field-label">Amount (₦)</label>
+            <InputText
+              v-model="form.amount"
+              type="number"
+              min="100"
+              step="0.01"
+              placeholder="Enter amount (minimum ₦100)"
+              :class="{ 'p-invalid': errors.amount }"
+              @input="clearErrors"
+            />
+            <p v-if="errors.amount" class="field-error">{{ errors.amount }}</p>
+          </div>
 
-        <div v-if="!selectedBeneficiaryId" class="space-y-3 border rounded-lg p-4">
-          <label class="flex items-center gap-2 text-sm text-gray-700">
-            <input v-model="saveBeneficiary" type="checkbox" class="rounded" />
-            Save this recipient after successful transfer
-          </label>
-
-          <div v-if="saveBeneficiary" class="grid grid-cols-1 gap-3">
-            <div>
-              <label class="block text-gray-700 font-medium">Bank Name</label>
+          <div v-if="!selectedBeneficiaryId" class="section-card section-stack">
+            <label class="flex items-center gap-3 text-sm text-surface-700">
               <input
+                v-model="saveBeneficiary"
+                type="checkbox"
+                class="h-4 w-4 rounded border-surface-300 text-brand-600 focus:ring-brand-100"
+              />
+              Save this recipient after a successful transfer
+            </label>
+
+            <div v-if="saveBeneficiary">
+              <label class="field-label">Bank name</label>
+              <InputText
                 v-model="form.bank_name"
                 type="text"
                 disabled
-                class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 placeholder="Vaultly Bank"
               />
             </div>
           </div>
-        </div>
 
-        <button
-          type="submit"
-          class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="verifying || (loadingBeneficiaries && !!selectedBeneficiaryId)"
-        >{{ verifying ? 'Verifying...' : (selectedBeneficiaryId ? 'Confirm Transfer' : 'Verify Account') }}</button>
+          <div v-if="errorMessage" class="alert-error">{{ errorMessage }}</div>
 
-        <p v-if="errorMessage" class="text-red-600 text-center text-sm mt-3">{{ errorMessage }}</p>
-      </form>
+          <Button
+            type="submit"
+            class="btn-primary w-full"
+            :disabled="verifying || (loadingBeneficiaries && !!selectedBeneficiaryId)"
+            :label="verifying ? 'Verifying...' : (selectedBeneficiaryId ? 'Confirm transfer' : 'Verify account')"
+          />
+        </form>
+      </FormCard>
 
-      <!-- Step 2: Confirmation -->
-      <div v-else-if="step === 2" class="space-y-4">
-        <div class="bg-blue-50 rounded-lg p-5 space-y-3">
-          <h3 class="text-lg font-semibold text-gray-800 text-center">Confirm Transfer</h3>
-          <div class="space-y-2 text-sm">
-            <div class="flex justify-between">
-              <span class="text-gray-500">Recipient</span>
-              <span class="font-medium text-gray-800">{{ verifiedName }}</span>
+      <FormCard
+        v-else-if="step === 2"
+        title="Confirm transfer"
+        subtitle="Review the recipient details and enter your transaction PIN to complete the transfer."
+      >
+        <div class="form-stack">
+          <div class="surface-muted space-y-3">
+            <div class="summary-row">
+              <span class="summary-label">Recipient</span>
+              <span class="summary-value">{{ verifiedName }}</span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">Account Number</span>
-              <span class="font-medium text-gray-800">{{ form.account_number }}</span>
+            <div class="summary-row">
+              <span class="summary-label">Account number</span>
+              <span class="summary-value">{{ form.account_number }}</span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">Amount</span>
-              <span class="font-bold text-blue-600">₦{{ Number(form.amount).toLocaleString('en-NG', { minimumFractionDigits: 2 }) }}</span>
+            <div class="summary-row">
+              <span class="summary-label">Amount</span>
+              <span class="summary-value text-brand-700">{{ formatCurrency(form.amount) }}</span>
             </div>
           </div>
-        </div>
 
-        <!-- Transaction PIN -->
-        <div>
-          <label class="block text-gray-700 font-medium text-sm">Transaction PIN</label>
-          <input
-            v-model="pin"
-            @input="onPinInput"
-            type="password"
-            maxlength="4"
-            inputmode="numeric"
-            placeholder="Enter 4-digit PIN"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-center text-xl tracking-[0.5em]"
-            :class="{ 'border-red-500': errors.pin }"
-          />
-          <p v-if="errors.pin" class="text-red-500 text-sm mt-1">{{ errors.pin }}</p>
-        </div>
+          <div>
+            <label class="field-label">Transaction PIN</label>
+            <Password
+              v-model="pin"
+              maxlength="4"
+              inputmode="numeric"
+              placeholder="Enter your 4-digit PIN"
+              :feedback="false"
+              toggleMask
+              fluid
+              :inputClass="errors.pin ? 'w-full p-invalid text-center tracking-[0.4em]' : 'w-full text-center tracking-[0.4em]'"
+              @input="onPinInput"
+            />
+            <p v-if="errors.pin" class="field-error">{{ errors.pin }}</p>
+          </div>
 
-        <div v-if="!hasTransactionPin" class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
-          <p class="font-medium">You need to set a transaction PIN before sending money.</p>
+          <div v-if="!hasTransactionPin" class="alert-warning">
+            <p>You need to set a transaction PIN before sending money.</p>
+            <button
+              class="btn-primary mt-3"
+              @click="router.push({ name: 'SetPin', params: { userId: String(route.params.userId) } })"
+            >
+              Set PIN
+            </button>
+          </div>
+
+          <div v-if="errorMessage" class="alert-error">{{ errorMessage }}</div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <button class="btn-secondary w-full" @click="step = 1">Cancel</button>
+            <Button
+              class="btn-primary w-full"
+              :disabled="transferring || !isPinValid || !hasTransactionPin"
+              :label="transferring ? 'Sending...' : 'Send money'"
+              @click="handleTransfer"
+            />
+          </div>
+        </div>
+      </FormCard>
+
+      <FormCard
+        v-else-if="step === 3"
+        title="Transfer complete"
+        subtitle="The transfer was processed successfully and your account balance has been updated."
+      >
+        <div class="space-y-5 text-center">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+            <span class="pi pi-check text-2xl" />
+          </div>
+          <div class="space-y-2">
+            <h3 class="section-title">Money sent successfully</h3>
+            <p class="section-subtitle">
+              {{ formatCurrency(form.amount) }} sent to {{ verifiedName }}.
+            </p>
+            <p class="text-sm text-surface-500">
+              New balance: {{ formatCurrency(authStore.user?.balance) }}
+            </p>
+          </div>
+          <div v-if="successMessage" class="alert-success text-left">{{ successMessage }}</div>
           <button
-            @click="router.push({ name: 'SetPin', params: { userId: String(route.params.userId) } })"
-            class="mt-2 inline-flex rounded-lg bg-amber-500 px-3 py-2 font-semibold text-white hover:bg-amber-600 transition"
-          >Set PIN</button>
+            class="btn-primary w-full"
+            @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
+          >
+            Back to dashboard
+          </button>
         </div>
-
-        <div class="flex gap-3">
-          <button
-            @click="step = 1"
-            class="w-1/2 py-2 px-4 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition"
-          >Cancel</button>
-          <button
-            @click="handleTransfer"
-            :disabled="transferring || !isPinValid || !hasTransactionPin"
-            class="w-1/2 py-2 px-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >{{ transferring ? 'Sending...' : 'Send Money' }}</button>
-        </div>
-
-        <p v-if="errorMessage" class="text-red-600 text-center text-sm mt-3">{{ errorMessage }}</p>
-      </div>
-
-      <!-- Step 3: Success -->
-      <div v-else-if="step === 3" class="text-center space-y-4">
-        <div class="text-green-500 text-5xl">✓</div>
-        <h3 class="text-xl font-bold text-gray-800">Transfer Successful!</h3>
-        <p class="text-gray-500">₦{{ Number(form.amount).toLocaleString('en-NG', { minimumFractionDigits: 2 }) }} sent to {{ verifiedName }}</p>
-        <p class="text-sm text-gray-400">New balance: ₦{{ Number(authStore.user.balance).toLocaleString('en-NG', { minimumFractionDigits: 2 }) }}</p>
-        <p v-if="successMessage" class="text-green-600 text-sm">{{ successMessage }}</p>
-        <button
-          @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
-          class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
-        >Back to Dashboard</button>
-      </div>
+      </FormCard>
     </div>
-  </div>
+  </PageWrapper>
 </template>
 
 <script setup>
@@ -183,6 +215,9 @@ import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import { useInputNormalization } from '@/composables/useInputNormalization';
+import PageWrapper from '@/components/ui/PageWrapper.vue';
+import SectionHeader from '@/components/ui/SectionHeader.vue';
+import FormCard from '@/components/ui/FormCard.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -209,6 +244,13 @@ const selectedBeneficiaryId = ref('');
 const saveBeneficiary = ref(false);
 const isPinValid = computed(() => /^\d{4}$/.test(pin.value));
 const hasTransactionPin = computed(() => !!authStore.user?.has_pin);
+const beneficiaryOptions = computed(() =>
+  beneficiaries.value.map((item) => ({
+    label: `${item.account_name} - ${item.account_number}`,
+    value: String(item.id)
+  }))
+);
+const formatCurrency = (value) => `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
 
 onMounted(async () => {
   if (!authStore.user) {
@@ -282,22 +324,17 @@ const syncSelectedBeneficiary = () => {
   return selected;
 };
 
-watch(selectedBeneficiaryId, () => {
+watch(selectedBeneficiaryId, (value) => {
+  if (!value) {
+    form.value.account_number = '';
+    form.value.bank_name = 'Vaultly Bank';
+  }
+
   const selected = syncSelectedBeneficiary();
   if (selected) {
     clearErrors();
   }
 });
-
-const useSavedBeneficiary = () => {
-  const selected = syncSelectedBeneficiary();
-
-  if (!selected) {
-    return;
-  }
-
-  clearErrors();
-};
 
 const clearErrors = () => {
   errors.value = {};

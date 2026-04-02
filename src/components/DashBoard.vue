@@ -1,120 +1,194 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
-    <!-- Loading State -->
-    <div v-if="loading" class="flex justify-center items-center h-64">
-      <p class="text-gray-500 text-lg">Loading dashboard...</p>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="errorMessage" class="flex flex-col justify-center items-center h-64">
-      <p class="text-red-600 text-lg mb-4">{{ errorMessage }}</p>
-      <button @click="fetchDashboard" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Retry</button>
-    </div>
-
-    <!-- Dashboard Content -->
-    <div v-else-if="user" class="max-w-4xl mx-auto space-y-6">
-      <div
-        v-if="flashSuccessMessage"
-        class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+  <PageWrapper>
+    <div class="page-stack">
+      <SectionHeader
+        title="Dashboard"
+        :subtitle="user ? `Welcome back, ${user.name}. Here's your latest account overview.` : 'Review your account summary and next actions.'"
+        eyebrow="Vaultly"
       >
-        {{ flashSuccessMessage }}
-      </div>
-
-      <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">Welcome, {{ user.name }}!</h1>
-        <button
-          @click="handleLogout"
-          :disabled="loggingOut"
-          class="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >{{ loggingOut ? 'Logging out...' : 'Logout' }}</button>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Balance Card -->
-        <div class="bg-white rounded-xl shadow p-6">
-          <p class="text-sm text-gray-500">Available Balance</p>
-          <p class="text-3xl font-bold text-blue-600 mt-1">₦{{ Number(user.balance).toLocaleString('en-NG', { minimumFractionDigits: 2 }) }}</p>
-        </div>
-
-        <!-- Account Info Card -->
-        <div class="bg-white rounded-xl shadow p-6">
-          <p class="text-sm text-gray-500">Account Number</p>
-          <p class="text-xl font-semibold text-gray-800 mt-1">{{ user.account_number }}</p>
-          <p class="text-sm text-gray-500 mt-2">Account Type</p>
-          <p class="text-base font-medium text-gray-700 capitalize">{{ user.account_type }}</p>
-        </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="flex gap-3 flex-wrap">
-        <button
-          @click="router.push({ name: 'Deposit', params: { userId: String(user.id) } })"
-          class="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition"
-        >+ Add Money</button>
-        <button
-          @click="router.push({ name: 'Transfer', params: { userId: String(user.id) } })"
-          class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
-        >Transfer</button>
-        <button
-          @click="router.push({ name: 'Beneficiaries', params: { userId: String(user.id) } })"
-          class="px-6 py-3 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition"
-        >Beneficiaries</button>
-        <button
-          @click="router.push({ name: 'TransactionHistory', params: { userId: String(user.id) } })"
-          class="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 transition"
-        >History</button>
-        <button
-          @click="router.push({ name: 'Withdraw', params: { userId: String(user.id) } })"
-          class="px-6 py-3 bg-rose-600 text-white font-semibold rounded-lg hover:bg-rose-700 transition"
-        >Withdraw</button>
-        <button
-          @click="router.push({ name: 'Profile', params: { userId: String(user.id) } })"
-          class="px-6 py-3 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition"
-        >Profile</button>
-      </div>
-
-      <!-- Security Section -->
-      <div class="bg-white rounded-xl shadow p-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-3">Security</h2>
-        <div class="flex gap-3">
+        <template #actions>
           <button
+            class="btn-danger"
+            :disabled="loggingOut"
+            @click="handleLogout"
+          >
+            <span class="pi pi-sign-out text-sm" />
+            {{ loggingOut ? 'Logging out...' : 'Logout' }}
+          </button>
+        </template>
+      </SectionHeader>
+
+      <div v-if="loading" class="empty-state min-h-72">
+        <span class="pi pi-spin pi-spinner text-2xl text-brand-600" />
+        <p>Loading dashboard...</p>
+      </div>
+
+      <div v-else-if="errorMessage" class="empty-state min-h-72">
+        <span class="pi pi-exclamation-circle text-2xl text-red-600" />
+        <p>{{ errorMessage }}</p>
+        <button class="btn-primary" @click="fetchDashboard">Retry</button>
+      </div>
+
+      <div v-else-if="user" class="page-stack">
+        <div v-if="flashSuccessMessage" class="alert-success">
+          {{ flashSuccessMessage }}
+        </div>
+
+        <div class="stats-grid">
+          <StatCard
+            label="Available balance"
+            :value="formatCurrency(user.balance)"
+            meta="Available for transfers and withdrawals"
+          >
+            <template #icon>
+              <span class="pi pi-wallet text-lg" />
+            </template>
+          </StatCard>
+
+          <StatCard
+            label="Account number"
+            :value="user.account_number"
+            :meta="`Account type: ${user.account_type}`"
+          >
+            <template #icon>
+              <span class="pi pi-credit-card text-lg" />
+            </template>
+          </StatCard>
+
+          <StatCard
+            label="Security"
+            :value="user.has_pin ? 'PIN active' : 'PIN required'"
+            :meta="user.has_pin ? 'Transfers are protected with your transaction PIN.' : 'Set a transaction PIN before sending money.'"
+          >
+            <template #icon>
+              <span class="pi pi-shield text-lg" />
+            </template>
+          </StatCard>
+        </div>
+
+        <section class="content-card section-stack">
+          <div class="space-y-1.5">
+            <h2 class="section-title">Quick actions</h2>
+            <p class="section-subtitle">
+              Use the same controls across the app to keep the workflow predictable.
+            </p>
+          </div>
+
+          <div class="action-grid">
+            <button
+              class="btn-primary justify-start"
+              @click="router.push({ name: 'Deposit', params: { userId: String(user.id) } })"
+            >
+              <span class="pi pi-plus-circle text-sm" />
+              Add money
+            </button>
+            <button
+              class="btn-secondary justify-start"
+              @click="router.push({ name: 'Transfer', params: { userId: String(user.id) } })"
+            >
+              <span class="pi pi-arrow-right-arrow-left text-sm" />
+              Transfer
+            </button>
+            <button
+              class="btn-secondary justify-start"
+              @click="router.push({ name: 'Beneficiaries', params: { userId: String(user.id) } })"
+            >
+              <span class="pi pi-users text-sm" />
+              Beneficiaries
+            </button>
+            <button
+              class="btn-secondary justify-start"
+              @click="router.push({ name: 'TransactionHistory', params: { userId: String(user.id) } })"
+            >
+              <span class="pi pi-history text-sm" />
+              History
+            </button>
+            <button
+              class="btn-secondary justify-start"
+              @click="router.push({ name: 'Withdraw', params: { userId: String(user.id) } })"
+            >
+              <span class="pi pi-arrow-circle-up text-sm" />
+              Withdraw
+            </button>
+            <button
+              class="btn-secondary justify-start"
+              @click="router.push({ name: 'Profile', params: { userId: String(user.id) } })"
+            >
+              <span class="pi pi-user text-sm" />
+              Profile
+            </button>
+          </div>
+        </section>
+
+        <section class="content-card section-stack">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div class="space-y-1.5">
+              <h2 class="section-title">Security</h2>
+              <p class="section-subtitle">
+                Keep transfers protected with a dedicated transaction PIN.
+              </p>
+            </div>
+
+            <button
+              v-if="!user.has_pin"
+              class="btn-primary"
+              @click="router.push({ name: 'SetPin', params: { userId: String(user.id) } })"
+            >
+              Set transaction PIN
+            </button>
+            <button
+              v-else
+              class="btn-secondary"
+              @click="router.push({ name: 'ChangePin', params: { userId: String(user.id) } })"
+            >
+              Change PIN
+            </button>
+          </div>
+
+          <div
             v-if="!user.has_pin"
-            @click="router.push({ name: 'SetPin', params: { userId: String(user.id) } })"
-            class="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition"
-          >Set Transaction PIN</button>
-          <button
+            class="alert-warning"
+          >
+            You must set a transaction PIN before making transfers.
+          </div>
+          <div
             v-else
-            @click="router.push({ name: 'ChangePin', params: { userId: String(user.id) } })"
-            class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
-          >Change PIN</button>
-        </div>
-        <p v-if="!user.has_pin" class="text-amber-600 text-sm mt-2">⚠ You must set a transaction PIN before making transfers.</p>
-      </div>
+            class="alert-info"
+          >
+            Your transaction PIN is active and ready for secure transfers.
+          </div>
+        </section>
 
-      <!-- User Details Card -->
-      <div class="bg-white rounded-xl shadow p-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Profile</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <p class="text-gray-500">Email</p>
-            <p class="text-gray-800">{{ user.email }}</p>
+        <section class="content-card section-stack">
+          <div class="space-y-1.5">
+            <h2 class="section-title">Profile summary</h2>
+            <p class="section-subtitle">
+              Core account information for quick reference.
+            </p>
           </div>
-          <div>
-            <p class="text-gray-500">Member Since</p>
-            <p class="text-gray-800">{{ new Date(user.created_at).toLocaleDateString() }}</p>
+
+          <div class="key-value-grid">
+            <div>
+              <p class="key-value-label">Email</p>
+              <p class="key-value-value">{{ user.email }}</p>
+            </div>
+            <div>
+              <p class="key-value-label">Member since</p>
+              <p class="key-value-value">{{ formatDate(user.created_at) }}</p>
+            </div>
+            <div v-if="user.next_of_kin_name">
+              <p class="key-value-label">Next of kin</p>
+              <p class="key-value-value">{{ user.next_of_kin_name }}</p>
+            </div>
+            <div v-if="user.next_of_kin_phone">
+              <p class="key-value-label">Next of kin phone</p>
+              <p class="key-value-value">{{ user.next_of_kin_phone }}</p>
+            </div>
           </div>
-          <div v-if="user.next_of_kin_name">
-            <p class="text-gray-500">Next of Kin</p>
-            <p class="text-gray-800">{{ user.next_of_kin_name }}</p>
-          </div>
-          <div v-if="user.next_of_kin_phone">
-            <p class="text-gray-500">Next of Kin Phone</p>
-            <p class="text-gray-800">{{ user.next_of_kin_phone }}</p>
-          </div>
-        </div>
+        </section>
       </div>
     </div>
-  </div>
+  </PageWrapper>
 </template>
 
 <script setup>
@@ -122,6 +196,9 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
+import PageWrapper from '@/components/ui/PageWrapper.vue';
+import SectionHeader from '@/components/ui/SectionHeader.vue';
+import StatCard from '@/components/ui/StatCard.vue';
 
 const loading = ref(true);
 const errorMessage = ref('');
@@ -132,6 +209,9 @@ const route = useRoute();
 const authStore = useAuthStore();
 
 const user = computed(() => authStore.user);
+
+const formatCurrency = (value) => `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
+const formatDate = (value) => new Date(value).toLocaleDateString();
 
 const handleLogout = async () => {
   loggingOut.value = true;

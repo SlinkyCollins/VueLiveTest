@@ -1,35 +1,334 @@
 @import "tailwindcss";
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+@theme {
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-900: #312e81;
+  --color-surface-50: #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+  --color-surface-300: #cbd5e1;
+  --color-surface-400: #94a3b8;
+  --color-surface-500: #64748b;
+  --color-surface-700: #334155;
+  --color-surface-900: #0f172a;
+  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px rgba(15, 23, 42, 0.06);
+  --radius-panel: 1rem;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
-}
-
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
+@layer base {
+  html {
+    @apply bg-surface-50;
   }
-}
 
-@media (min-width: 1024px) {
   body {
-    display: flex;
-    place-items: center;
+    @apply m-0 min-h-screen bg-surface-50 text-surface-900 antialiased;
+    font-family: Inter, "Segoe UI", sans-serif;
   }
 
   #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
+    @apply min-h-screen;
+  }
+
+  * {
+    @apply box-border;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply m-0;
+  }
+
+  p {
+    @apply m-0;
+  }
+
+  a {
+    @apply text-brand-600 transition-colors hover:text-brand-700;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .page-shell {
+    @apply min-h-screen bg-surface-50;
+  }
+
+  .page-shell-centered {
+    @apply flex items-center;
+  }
+
+  .page-container {
+    @apply mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8;
+  }
+
+  .page-container-narrow {
+    @apply max-w-3xl;
+  }
+
+  .page-container-auth {
+    @apply max-w-md py-10 sm:py-16;
+  }
+
+  .page-stack {
+    @apply space-y-6;
+  }
+
+  .page-header {
+    @apply flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between;
+  }
+
+  .page-header-actions {
+    @apply flex flex-wrap items-center gap-3;
+  }
+
+  .page-title {
+    @apply text-2xl font-semibold tracking-tight text-surface-900 sm:text-3xl;
+  }
+
+  .page-subtitle {
+    @apply text-sm leading-6 text-surface-500 sm:text-base;
+  }
+
+  .section-title {
+    @apply text-lg font-semibold text-surface-900;
+  }
+
+  .section-subtitle {
+    @apply text-sm leading-6 text-surface-500;
+  }
+
+  .section-card,
+  .content-card,
+  .form-card,
+  .stat-card,
+  .empty-state {
+    @apply rounded-2xl border border-surface-200 bg-white shadow-soft;
+  }
+
+  .content-card,
+  .form-card,
+  .empty-state {
+    @apply p-6 sm:p-7;
+  }
+
+  .section-card {
+    @apply p-5 sm:p-6;
+  }
+
+  .stat-card {
+    @apply p-5;
+  }
+
+  .surface-muted {
+    @apply rounded-xl border border-surface-200 bg-surface-50 p-4;
+  }
+
+  .section-stack {
+    @apply space-y-5;
+  }
+
+  .stats-grid {
+    @apply grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3;
+  }
+
+  .stat-label {
+    @apply text-sm font-medium text-surface-500;
+  }
+
+  .stat-value {
+    @apply text-2xl font-semibold tracking-tight text-surface-900;
+  }
+
+  .stat-meta {
+    @apply text-sm text-surface-500;
+  }
+
+  .form-stack {
+    @apply space-y-5;
+  }
+
+  .form-grid {
+    @apply grid grid-cols-1 gap-4 md:grid-cols-2;
+  }
+
+  .field-label {
+    @apply mb-2 block text-sm font-medium text-surface-700;
+  }
+
+  .field-help {
+    @apply mt-1.5 text-sm text-surface-500;
+  }
+
+  .field-error {
+    @apply mt-1.5 text-sm text-red-600;
+  }
+
+  .input-base,
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea,
+  .p-inputtext,
+  .p-password-input,
+  .p-select {
+    @apply block w-full rounded-xl border border-surface-300 bg-white px-4 py-3 text-sm text-surface-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-surface-100 disabled:text-surface-500;
+  }
+
+  .p-password,
+  .p-password-input,
+  .p-inputtext,
+  .p-select {
+    @apply w-full;
+  }
+
+  .p-password .p-password-toggle-mask-icon {
+    @apply text-surface-400;
+  }
+
+  .input-base::placeholder,
+  input:not([type="checkbox"]):not([type="radio"])::placeholder,
+  select::placeholder,
+  textarea::placeholder,
+  .p-inputtext::placeholder,
+  .p-password-input::placeholder {
+    @apply text-surface-400;
+  }
+
+  .p-select {
+    @apply px-0 py-0;
+  }
+
+  .p-select .p-select-label {
+    @apply px-4 py-3 text-sm text-surface-900;
+  }
+
+  .p-select .p-select-dropdown {
+    @apply w-12 text-surface-400;
+  }
+
+  .p-inputtext.p-invalid,
+  .p-password-input.p-invalid,
+  .p-select.p-invalid {
+    @apply border-red-300 focus:border-red-500 focus:ring-red-100;
+  }
+
+  .btn-base {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-100 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-surface-300 bg-white px-4 py-3 text-sm font-medium text-surface-700 transition hover:bg-surface-50 focus:outline-none focus:ring-4 focus:ring-surface-200 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-100 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-link {
+    @apply inline-flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700;
+  }
+
+  .p-button.btn-primary {
+    @apply border-0 bg-brand-600 text-white hover:bg-brand-700;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700;
+  }
+
+  .badge-muted {
+    @apply inline-flex items-center rounded-full bg-surface-100 px-2.5 py-1 text-xs font-medium text-surface-700;
+  }
+
+  .badge-success {
+    @apply inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700;
+  }
+
+  .alert {
+    @apply rounded-xl border px-4 py-3 text-sm;
+  }
+
+  .alert-info {
+    @apply rounded-xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-900;
+  }
+
+  .alert-success {
+    @apply rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800;
+  }
+
+  .alert-warning {
+    @apply rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800;
+  }
+
+  .alert-error {
+    @apply rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700;
+  }
+
+  .empty-state {
+    @apply flex flex-col items-center justify-center gap-3 text-center text-surface-500;
+  }
+
+  .key-value-grid {
+    @apply grid grid-cols-1 gap-4 md:grid-cols-2;
+  }
+
+  .key-value-label {
+    @apply text-sm text-surface-500;
+  }
+
+  .key-value-value {
+    @apply mt-1 text-sm font-medium text-surface-900;
+  }
+
+  .action-grid {
+    @apply grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3;
+  }
+
+  .summary-row {
+    @apply flex items-center justify-between gap-4 text-sm;
+  }
+
+  .summary-label {
+    @apply text-surface-500;
+  }
+
+  .summary-value {
+    @apply font-medium text-surface-900;
+  }
+
+  .table-list {
+    @apply space-y-3;
+  }
+
+  .table-row {
+    @apply rounded-xl border border-surface-200 bg-white p-4 shadow-sm;
+  }
+
+  .p-toast {
+    @apply text-sm;
+  }
+
+  .p-toast .p-toast-message {
+    @apply rounded-2xl border border-surface-200 shadow-soft;
   }
 }
