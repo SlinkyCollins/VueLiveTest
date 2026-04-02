@@ -59,6 +59,11 @@
   textarea {
     font: inherit;
   }
+
+  button,
+  select {
+    cursor: pointer;
+  }
 }
 
 @layer components {
@@ -195,6 +200,7 @@
 
   .p-password .p-password-toggle-mask-icon {
     @apply text-surface-400;
+    cursor: pointer;
   }
 
   .input-base::placeholder,

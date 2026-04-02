@@ -21,6 +21,14 @@
       <div v-if="loading" class="empty-state min-h-72">
         <span class="pi pi-spin pi-spinner text-2xl text-brand-600" />
         <p>Loading dashboard...</p>
+        <div class="w-full max-w-4xl space-y-4 pt-2">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <Skeleton height="8.5rem" borderRadius="1rem" />
+            <Skeleton height="8.5rem" borderRadius="1rem" />
+            <Skeleton height="8.5rem" borderRadius="1rem" />
+          </div>
+          <Skeleton height="10.5rem" borderRadius="1rem" />
+        </div>
       </div>
 
       <div v-else-if="errorMessage" class="empty-state min-h-72">
@@ -30,10 +38,6 @@
       </div>
 
       <div v-else-if="user" class="page-stack">
-        <div v-if="flashSuccessMessage" class="alert-success">
-          {{ flashSuccessMessage }}
-        </div>
-
         <div class="stats-grid">
           <StatCard
             label="Available balance"
@@ -194,6 +198,8 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useToast } from 'primevue/usetoast';
+import Skeleton from 'primevue/skeleton';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import PageWrapper from '@/components/ui/PageWrapper.vue';
@@ -203,10 +209,10 @@ import StatCard from '@/components/ui/StatCard.vue';
 const loading = ref(true);
 const errorMessage = ref('');
 const loggingOut = ref(false);
-const flashSuccessMessage = ref('');
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const toast = useToast();
 
 const user = computed(() => authStore.user);
 
@@ -251,7 +257,12 @@ const fetchDashboard = async () => {
 
 onMounted(async () => {
   if (route.query.pinSet === '1') {
-    flashSuccessMessage.value = 'PIN set successfully.';
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'PIN set successfully.',
+      life: 2500,
+    });
 
     const nextQuery = { ...route.query };
     delete nextQuery.pinSet;
@@ -262,7 +273,12 @@ onMounted(async () => {
       query: nextQuery,
     });
   } else if (route.query.pinChanged === '1') {
-    flashSuccessMessage.value = 'PIN changed successfully.';
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'PIN changed successfully.',
+      life: 2500,
+    });
 
     const nextQuery = { ...route.query };
     delete nextQuery.pinChanged;
@@ -273,7 +289,12 @@ onMounted(async () => {
       query: nextQuery,
     });
   } else if (route.query.loginSuccess === '1') {
-    flashSuccessMessage.value = 'Login successful.';
+    toast.add({
+      severity: 'success',
+      summary: 'Welcome back',
+      detail: 'Login successful.',
+      life: 2500,
+    });
 
     const nextQuery = { ...route.query };
     delete nextQuery.loginSuccess;
