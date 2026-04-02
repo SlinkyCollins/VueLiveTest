@@ -43,30 +43,22 @@
           <p v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password[0] }}</p>
         </div>
 
-        <!-- Account Type (Headless UI Listbox) -->
+        <!-- Account Type -->
         <div>
           <label class="block text-gray-700 font-medium mb-1">Account Type</label>
-          <Listbox v-model="form.accountType">
-            <div class="relative">
-              <ListboxButton class="w-full px-4 py-2 border rounded-lg text-left focus:ring-2 focus:ring-blue-500">
-                <span>{{ form.accountType || 'Select account type' }}</span>
-                <span class="absolute inset-y-0 right-0 flex items-center pr-2">
-                  <ChevronUpDownIcon class="h-5 w-5 text-gray-400" />
-                </span>
-              </ListboxButton>
-
-              <ListboxOptions class="absolute mt-1 w-full bg-white shadow-lg rounded-md z-10">
-                <ListboxOption
-                  v-for="type in accountTypes"
-                  :key="type"
-                  :value="type"
-                  class="cursor-pointer px-4 py-2 hover:bg-blue-100"
-                >
-                  {{ type }}
-                </ListboxOption>
-              </ListboxOptions>
-            </div>
-          </Listbox>
+          <select
+            v-model="form.accountType"
+            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+          >
+            <option value="" disabled>Select account type</option>
+            <option
+              v-for="type in accountTypes"
+              :key="type"
+              :value="type"
+            >
+              {{ type }}
+            </option>
+          </select>
           <p v-if="errors.accountType" class="text-red-500 text-sm mt-1">{{ errors.accountType[0] }}</p>
         </div>
 
@@ -92,8 +84,6 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import api from "@/utils/api";
-import { ChevronUpDownIcon } from "@heroicons/vue/24/solid";
-import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from "@headlessui/vue";
 
 const router = useRouter();
 
@@ -152,5 +142,4 @@ const submitForm = async () => {
 </script>
 
 <style scoped>
-/* optional small tweak to prevent text overflow in ListboxButton */
 </style>

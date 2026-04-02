@@ -34,14 +34,6 @@
           />
           <p v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password }}</p>
         </div>
-        <div class="flex items-center">
-          <!-- "Remember Me" toggle using Headless UI Switch -->
-          <Switch v-model="rememberMe" :class="rememberMe ? 'bg-blue-600' : 'bg-gray-200'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none hover:cursor-pointer">
-            <span class="sr-only">Remember me</span>
-            <span :class="rememberMe ? 'translate-x-6' : 'translate-x-1'" class="inline-block h-4 w-4 transform rounded-full bg-white transition" ></span>
-          </Switch>
-          <label class="ml-2">Remember me</label>
-        </div>
 
         <button
           type="submit"
@@ -59,7 +51,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from "vue-router";
-import { Switch } from '@headlessui/vue';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 
@@ -67,7 +58,6 @@ const form = ref({
   email: "",
   password: "",
 });
-const rememberMe = ref(false);
 const loading = ref(false);
 const errors = ref({});
 const errorMessage = ref("");
