@@ -1,107 +1,145 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
-    <div class="max-w-5xl mx-auto space-y-6">
-      <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">Beneficiaries</h1>
-        <button
-          @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
-          class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition"
-        >
-          Back to Dashboard
-        </button>
-      </div>
+  <PageWrapper>
+    <div class="page-stack">
+      <SectionHeader
+        title="Beneficiaries"
+        subtitle="Save trusted recipients so transfers stay quick and consistent."
+        eyebrow="Recipients"
+      >
+        <template #actions>
+          <button
+            class="btn-secondary"
+            @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
+          >
+            <span class="pi pi-arrow-left text-sm" />
+            Back to dashboard
+          </button>
+        </template>
+      </SectionHeader>
 
-      <form @submit.prevent="handleAdd" class="bg-white rounded-xl shadow p-6 space-y-4">
-        <h2 class="text-lg font-semibold text-gray-800">Add Beneficiary</h2>
+      <FormCard
+        :title="editingId ? 'Edit beneficiary' : 'Add beneficiary'"
+        subtitle="Store a Vaultly recipient once, then reuse the details during transfers."
+      >
+        <form @submit.prevent="handleAdd" class="form-stack">
+          <div class="form-grid">
+            <div>
+              <label class="field-label">Account number</label>
+              <InputText
+                v-model="form.account_number"
+                @input="onAccountNumberInput"
+                type="text"
+                maxlength="12"
+                inputmode="numeric"
+                placeholder="12-digit account number"
+                :class="{ 'p-invalid': errors.account_number }"
+              />
+              <p v-if="errors.account_number" class="field-error">{{ errors.account_number }}</p>
+            </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-gray-700 font-medium">Account Number</label>
-            <input
-              v-model="form.account_number"
-              @input="onAccountNumberInput"
-              type="text"
-              maxlength="12"
-              inputmode="numeric"
-              pattern="[0-9]{12}"
-              class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              :class="{ 'border-red-500': errors.account_number }"
-              placeholder="12-digit account number"
-            />
-            <p v-if="errors.account_number" class="text-red-500 text-sm mt-1">{{ errors.account_number }}</p>
+            <div>
+              <label class="field-label">Bank name</label>
+              <InputText
+                v-model="form.bank_name"
+                type="text"
+                disabled
+                placeholder="Vaultly Bank"
+                :class="{ 'p-invalid': errors.bank_name }"
+              />
+              <p v-if="errors.bank_name" class="field-error">{{ errors.bank_name }}</p>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-gray-700 font-medium">Bank Name</label>
-            <input
-              v-model="form.bank_name"
-              type="text"
-              disabled
-              class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              :class="{ 'border-red-500': errors.bank_name }"
-              placeholder="Vaultly Bank"
+          <div v-if="successMessage" class="alert-success">{{ successMessage }}</div>
+          <div v-if="errorMessage" class="alert-error">{{ errorMessage }}</div>
+
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <Button
+              type="submit"
+              :disabled="submitting"
+              class="btn-primary"
+              :label="submitting ? 'Saving...' : (editingId ? 'Update beneficiary' : 'Save beneficiary')"
             />
-            <p v-if="errors.bank_name" class="text-red-500 text-sm mt-1">{{ errors.bank_name }}</p>
+
+            <button
+              v-if="editingId"
+              type="button"
+              @click="cancelEdit"
+              class="btn-secondary"
+            >
+              Cancel edit
+            </button>
           </div>
+        </form>
+      </FormCard>
+
+      <section class="content-card section-stack">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="space-y-1">
+            <h2 class="section-title">Saved beneficiaries</h2>
+            <p class="section-subtitle">
+              Reuse stored recipients for faster transfers and fewer manual steps.
+            </p>
+          </div>
+          <button class="btn-secondary" @click="fetchBeneficiaries">
+            <span class="pi pi-refresh text-sm" />
+            Refresh
+          </button>
         </div>
 
-        <div class="flex gap-3">
-          <button
-            type="submit"
-            :disabled="submitting"
-            class="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-          >{{ submitting ? 'Saving...' : 'Save Beneficiary' }}</button>
-
-          <button
-            v-if="editingId"
-            type="button"
-            @click="cancelEdit"
-            class="px-5 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition"
-          >Cancel Edit</button>
+        <div v-if="loading" class="empty-state min-h-56">
+          <span class="pi pi-spin pi-spinner text-2xl text-brand-600" />
+          <p>Loading beneficiaries...</p>
         </div>
 
-        <p v-if="successMessage" class="text-green-600 text-sm">{{ successMessage }}</p>
-        <p v-if="errorMessage" class="text-red-600 text-sm">{{ errorMessage }}</p>
-      </form>
-
-      <div class="bg-white rounded-xl shadow p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-semibold text-gray-800">Saved Beneficiaries</h2>
-          <button @click="fetchBeneficiaries" class="text-sm text-blue-600 hover:underline">Refresh</button>
+        <div v-else-if="beneficiaries.length === 0" class="empty-state min-h-56">
+          <span class="pi pi-users text-2xl text-surface-400" />
+          <p>No beneficiaries saved yet.</p>
         </div>
 
-        <div v-if="loading" class="py-8 text-center text-gray-500">Loading beneficiaries...</div>
-        <div v-else-if="beneficiaries.length === 0" class="py-8 text-center text-gray-500">No beneficiaries saved yet.</div>
-
-        <div v-else class="space-y-3">
-          <div
+        <div v-else class="table-list">
+          <article
             v-for="beneficiary in beneficiaries"
             :key="beneficiary.id"
-            class="border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+            class="table-row"
           >
-            <div>
-              <p class="font-semibold text-gray-800">{{ beneficiary.account_name }}</p>
-              <p class="text-sm text-gray-500">{{ beneficiary.account_number }} | {{ beneficiary.bank_name }} ({{ beneficiary.bank_code || 'N/A' }})</p>
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div class="space-y-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <p class="text-sm font-semibold text-surface-900">{{ beneficiary.account_name }}</p>
+                  <span class="badge-primary">Vaultly</span>
+                </div>
+                <p class="text-sm text-surface-500">
+                  {{ beneficiary.account_number }} | {{ beneficiary.bank_name }} ({{ beneficiary.bank_code || 'N/A' }})
+                </p>
+              </div>
+
+              <div class="flex flex-col gap-2 sm:flex-row">
+                <button
+                  @click="useForTransfer(beneficiary)"
+                  class="btn-primary"
+                >
+                  Transfer
+                </button>
+                <button
+                  @click="startEdit(beneficiary)"
+                  class="btn-secondary"
+                >
+                  Edit
+                </button>
+                <button
+                  @click="handleDelete(beneficiary.id)"
+                  class="btn-danger"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-            <div class="flex gap-2">
-              <button
-                @click="useForTransfer(beneficiary)"
-                class="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition"
-              >Transfer</button>
-              <button
-                @click="startEdit(beneficiary)"
-                class="px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition"
-              >Edit</button>
-              <button
-                @click="handleDelete(beneficiary.id)"
-                class="px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition"
-              >Delete</button>
-            </div>
-          </div>
+          </article>
         </div>
-      </div>
+      </section>
     </div>
-  </div>
+  </PageWrapper>
 </template>
 
 <script setup>
@@ -110,6 +148,9 @@ import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import { useInputNormalization } from '@/composables/useInputNormalization';
+import PageWrapper from '@/components/ui/PageWrapper.vue';
+import SectionHeader from '@/components/ui/SectionHeader.vue';
+import FormCard from '@/components/ui/FormCard.vue';
 
 const router = useRouter();
 const route = useRoute();

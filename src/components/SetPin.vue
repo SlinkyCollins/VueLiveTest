@@ -1,56 +1,66 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
-      <button
-        @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
-        class="text-blue-600 text-sm font-medium hover:underline mb-4 inline-block"
-      >&larr; Back to Dashboard</button>
+  <PageWrapper auth>
+    <FormCard
+      title="Set transaction PIN"
+      subtitle="Create a 4-digit PIN to authorize transfers from your Vaultly account."
+    >
+      <div class="mb-6">
+        <button
+          class="btn-link"
+          @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
+        >
+          <span class="pi pi-arrow-left text-sm" />
+          Back to dashboard
+        </button>
+      </div>
 
-      <h2 class="text-2xl font-bold text-center mb-2 text-blue-600">Set Transaction PIN 🔒</h2>
-      <p class="text-gray-500 text-center text-sm mb-6">Create a 4-digit PIN to authorize transfers</p>
-
-      <form @submit.prevent="handleSetPin" class="space-y-4">
+      <form @submit.prevent="handleSetPin" class="form-stack">
         <div>
-          <label class="block text-gray-700 font-medium">PIN</label>
-          <input
+          <label class="field-label">PIN</label>
+          <Password
             v-model="pin"
-            @input="onPinInput"
-            type="password"
             maxlength="4"
             inputmode="numeric"
             placeholder="Enter 4-digit PIN"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-center text-2xl tracking-[0.5em]"
-            :class="{ 'border-red-500': errors.pin }"
+            :feedback="false"
+            toggleMask
+            fluid
+            :inputClass="errors.pin ? 'w-full p-invalid text-center text-2xl tracking-[0.5em]' : 'w-full text-center text-2xl tracking-[0.5em]'"
+            @input="onPinInput"
           />
-          <p v-if="errors.pin" class="text-red-500 text-sm mt-1">{{ errors.pin }}</p>
+          <p v-if="errors.pin" class="field-error">{{ errors.pin }}</p>
         </div>
 
         <div>
-          <label class="block text-gray-700 font-medium">Confirm PIN</label>
-          <input
+          <label class="field-label">Confirm PIN</label>
+          <Password
             v-model="pinConfirmation"
-            @input="onPinConfirmationInput"
-            type="password"
             maxlength="4"
             inputmode="numeric"
             placeholder="Re-enter 4-digit PIN"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-center text-2xl tracking-[0.5em]"
-            :class="{ 'border-red-500': errors.pin_confirmation }"
+            :feedback="false"
+            toggleMask
+            fluid
+            :inputClass="errors.pin_confirmation ? 'w-full p-invalid text-center text-2xl tracking-[0.5em]' : 'w-full text-center text-2xl tracking-[0.5em]'"
+            @input="onPinConfirmationInput"
           />
-          <p v-if="errors.pin_confirmation" class="text-red-500 text-sm mt-1">{{ errors.pin_confirmation }}</p>
+          <p v-if="errors.pin_confirmation" class="field-error">{{ errors.pin_confirmation }}</p>
         </div>
 
-        <button
-          type="submit"
-          class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="loading"
-        >{{ loading ? 'Setting PIN...' : 'Set PIN' }}</button>
+        <div class="space-y-3">
+          <Button
+            type="submit"
+            class="btn-primary w-full"
+            :disabled="loading"
+            :label="loading ? 'Setting PIN...' : 'Set PIN'"
+          />
 
-        <p v-if="successMessage" class="text-green-600 text-center text-sm mt-3">{{ successMessage }}</p>
-        <p v-if="errorMessage" class="text-red-600 text-center text-sm mt-3">{{ errorMessage }}</p>
+          <div v-if="successMessage" class="alert-success">{{ successMessage }}</div>
+          <div v-if="errorMessage" class="alert-error">{{ errorMessage }}</div>
+        </div>
       </form>
-    </div>
-  </div>
+    </FormCard>
+  </PageWrapper>
 </template>
 
 <script setup>
@@ -59,6 +69,8 @@ import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import { useInputNormalization } from '@/composables/useInputNormalization';
+import PageWrapper from '@/components/ui/PageWrapper.vue';
+import FormCard from '@/components/ui/FormCard.vue';
 
 const router = useRouter();
 const route = useRoute();

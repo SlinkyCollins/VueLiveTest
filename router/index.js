@@ -110,16 +110,6 @@ router.beforeEach(async (to) => {
         authStore.clearAuth();
         return true;
       }
-
-      // Deterministic fallback for transient errors: route to Home with retry hint.
-      return {
-        name: "home",
-        query: {
-          authRetry: "1",
-          retryFrom: String(to.name || "auth"),
-        },
-        replace: true,
-      };
     }
   }
 
@@ -136,16 +126,6 @@ router.beforeEach(async (to) => {
         authStore.clearAuth();
         return { name: "Login" };
       }
-
-      // Deterministic fallback for transient errors on protected routes.
-      return {
-        name: "home",
-        query: {
-          authRetry: "1",
-          retryFrom: String(to.name || "protected"),
-        },
-        replace: true,
-      };
     }
   }
 

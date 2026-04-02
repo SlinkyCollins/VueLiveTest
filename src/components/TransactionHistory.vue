@@ -1,71 +1,112 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
-    <div class="max-w-4xl mx-auto space-y-6">
-      <!-- Header -->
-      <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">Transaction History</h1>
-        <button @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
-          class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition">← Back
-          to Dashboard</button>
+  <PageWrapper>
+    <div class="page-stack">
+      <SectionHeader
+        title="Transaction history"
+        subtitle="Review recent credits and debits across your account."
+        eyebrow="Activity"
+      >
+        <template #actions>
+          <button
+            class="btn-secondary"
+            @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
+          >
+            <span class="pi pi-arrow-left text-sm" />
+            Back to dashboard
+          </button>
+        </template>
+      </SectionHeader>
+
+      <div v-if="loading" class="empty-state min-h-64">
+        <span class="pi pi-spin pi-spinner text-2xl text-brand-600" />
+        <p>Loading transactions...</p>
       </div>
 
-      <!-- Loading -->
-      <div v-if="loading" class="flex justify-center items-center h-40">
-        <p class="text-gray-500">Loading transactions...</p>
+      <div v-else-if="errorMessage" class="empty-state min-h-64">
+        <span class="pi pi-exclamation-circle text-2xl text-red-600" />
+        <p>{{ errorMessage }}</p>
+        <button class="btn-primary" @click="fetchTransactions()">Retry</button>
       </div>
 
-      <!-- Error -->
-      <div v-else-if="errorMessage" class="text-center py-10">
-        <p class="text-red-600 mb-4">{{ errorMessage }}</p>
-        <button @click="fetchTransactions"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Retry</button>
+      <div v-else-if="transactions.length === 0" class="empty-state min-h-64">
+        <span class="pi pi-receipt text-2xl text-surface-400" />
+        <p>No transactions yet.</p>
       </div>
 
-      <!-- Empty State -->
-      <div v-else-if="transactions.length === 0" class="text-center py-10">
-        <p class="text-gray-500 text-lg">No transactions yet.</p>
-      </div>
-
-      <!-- Transaction List -->
-      <div v-else class="space-y-3">
-        <div v-for="tx in transactions" :key="tx.transaction_reference"
-          class="bg-white rounded-xl shadow p-4 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <!-- Direction Icon -->
-            <div :class="tx.direction === 'credit'
-              ? 'bg-green-100 text-green-600'
-              : 'bg-red-100 text-red-600'"
-              class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold">
-              {{ tx.direction === 'credit' ? '↓' : '↑' }}
-            </div>
-            <div>
-              <p class="font-semibold text-gray-800 capitalize">{{ tx.type }}</p>
-              <p class="text-xs text-gray-500">Ref: {{ tx.transaction_reference }}</p>
-              <p class="text-xs text-gray-500">{{ formatDate(tx.created_at) }}</p>
-              <p class="text-xs text-gray-500">From: {{ tx.sender_account_name }} ({{ tx.sender_account_number }})</p>
-              <p class="text-xs text-gray-500">To: {{ tx.recipient_account_name }} ({{ tx.recipient_account_number }})</p>
-            </div>
-          </div>
-          <div class="text-right">
-            <p :class="tx.direction === 'credit' ? 'text-green-600' : 'text-red-600'" class="font-bold text-lg">
-              {{ tx.direction === 'credit' ? '+' : '-' }}₦{{ Number(tx.amount).toLocaleString('en-NG', {
-              minimumFractionDigits: 2 }) }}
+      <section v-else class="content-card section-stack">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div class="space-y-1">
+            <h2 class="section-title">Recent activity</h2>
+            <p class="section-subtitle">
+              Each item shows the direction, amount, reference, and balance after the transaction.
             </p>
-            <p class="text-xs text-gray-500">Bal: ₦{{ Number(tx.balance_after).toLocaleString('en-NG', {
-              minimumFractionDigits: 2 }) }}</p>
           </div>
+          <span class="badge-primary">{{ transactions.length }} records</span>
         </div>
 
-        <!-- Pagination -->
-        <div v-if="lastPage > 1" class="flex justify-center gap-2 pt-4">
-          <button v-for="page in lastPage" :key="page" @click="fetchTransactions(page)" :class="page === currentPage
-            ? 'bg-blue-600 text-white'
-            : 'bg-white text-gray-700 hover:bg-gray-100'"
-            class="w-10 h-10 rounded-lg text-sm font-medium shadow transition">{{ page }}</button>
+        <div class="table-list">
+          <article
+            v-for="tx in transactions"
+            :key="tx.transaction_reference"
+            class="table-row"
+          >
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div class="flex items-start gap-4">
+                <div
+                  :class="tx.direction === 'credit'
+                    ? 'bg-emerald-50 text-emerald-600'
+                    : 'bg-surface-100 text-surface-700'"
+                  class="flex h-11 w-11 items-center justify-center rounded-full text-lg"
+                >
+                  <span :class="tx.direction === 'credit' ? 'pi pi-arrow-down-left' : 'pi pi-arrow-up-right'" />
+                </div>
+
+                <div class="space-y-2">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p class="text-sm font-semibold capitalize text-surface-900">{{ tx.type }}</p>
+                    <span :class="tx.direction === 'credit' ? 'badge-success' : 'badge-muted'">
+                      {{ tx.direction }}
+                    </span>
+                  </div>
+
+                  <div class="space-y-1 text-sm text-surface-500">
+                    <p>Reference: {{ tx.transaction_reference }}</p>
+                    <p>{{ formatDate(tx.created_at) }}</p>
+                    <p>From: {{ tx.sender_account_name }} ({{ tx.sender_account_number }})</p>
+                    <p>To: {{ tx.recipient_account_name }} ({{ tx.recipient_account_number }})</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-1 text-left lg:text-right">
+                <p
+                  :class="tx.direction === 'credit' ? 'text-emerald-600' : 'text-red-600'"
+                  class="text-lg font-semibold"
+                >
+                  {{ tx.direction === 'credit' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
+                </p>
+                <p class="text-sm text-surface-500">
+                  Balance after: {{ formatCurrency(tx.balance_after) }}
+                </p>
+              </div>
+            </div>
+          </article>
         </div>
-      </div>
+
+        <div v-if="lastPage > 1" class="flex flex-wrap justify-center gap-2 pt-2">
+          <button
+            v-for="page in lastPage"
+            :key="page"
+            :class="page === currentPage ? 'btn-primary' : 'btn-secondary'"
+            class="h-10 min-w-10 px-3 py-0"
+            @click="fetchTransactions(page)"
+          >
+            {{ page }}
+          </button>
+        </div>
+      </section>
     </div>
-  </div>
+  </PageWrapper>
 </template>
 
 <script setup>
@@ -73,6 +114,8 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
+import PageWrapper from '@/components/ui/PageWrapper.vue';
+import SectionHeader from '@/components/ui/SectionHeader.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -83,6 +126,7 @@ const loading = ref(true);
 const errorMessage = ref('');
 const currentPage = ref(1);
 const lastPage = ref(1);
+const formatCurrency = (value) => `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
 
 const formatDate = (dateStr) => {
   const d = new Date(dateStr);

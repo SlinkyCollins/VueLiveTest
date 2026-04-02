@@ -1,30 +1,47 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
-    <div class="max-w-4xl mx-auto space-y-6">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-800">Profile</h1>
-        <button
-          @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
-          class="px-4 py-2 bg-gray-700 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition"
-        >Back to Dashboard</button>
+  <PageWrapper>
+    <div class="page-stack">
+      <SectionHeader
+        title="Profile"
+        subtitle="Manage your account details, profile picture, and next of kin information."
+        eyebrow="Account"
+      >
+        <template #actions>
+          <button
+            class="btn-secondary"
+            @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
+          >
+            <span class="pi pi-arrow-left text-sm" />
+            Back to dashboard
+          </button>
+        </template>
+      </SectionHeader>
+
+      <div v-if="loading" class="empty-state min-h-64">
+        <span class="pi pi-spin pi-spinner text-2xl text-brand-600" />
+        <p>Loading profile...</p>
       </div>
 
-      <div v-if="loading" class="bg-white rounded-xl shadow p-6 text-gray-500">Loading profile...</div>
+      <div v-else class="page-stack">
+        <section class="content-card section-stack">
+          <div class="space-y-1">
+            <h2 class="section-title">Profile picture</h2>
+            <p class="section-subtitle">
+              Upload or remove your account avatar.
+            </p>
+          </div>
 
-      <div v-else class="space-y-6">
-        <div class="bg-white rounded-xl shadow p-6">
-          <h2 class="text-lg font-semibold text-gray-800 mb-4">Profile Image</h2>
-          <div class="flex flex-col sm:flex-row gap-4 sm:items-center">
+          <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
             <img
               :src="imagePreview || fallbackAvatar"
               alt="Profile preview"
               @error="handleImageLoadError"
-              class="w-24 h-24 rounded-full object-cover border border-gray-200"
+              class="h-24 w-24 rounded-full border border-surface-200 object-cover"
             />
 
             <div class="flex flex-wrap gap-3">
-              <label class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition cursor-pointer">
-                <span>{{ uploadingImage ? 'Uploading...' : 'Upload Image' }}</span>
+              <label class="btn-primary cursor-pointer">
+                <span>{{ uploadingImage ? 'Uploading...' : 'Upload image' }}</span>
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
@@ -36,105 +53,137 @@
               <button
                 @click="removeProfileImage"
                 :disabled="removingImage || !user?.profile_picture"
-                class="px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >{{ removingImage ? 'Removing...' : 'Remove Image' }}</button>
+                class="btn-danger"
+              >
+                {{ removingImage ? 'Removing...' : 'Remove image' }}
+              </button>
             </div>
           </div>
-          <p v-if="imageError" class="text-sm text-red-600 mt-3">{{ imageError }}</p>
-        </div>
 
-        <div class="bg-white rounded-xl shadow p-6">
-          <h2 class="text-lg font-semibold text-gray-800 mb-4">View Profile</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p class="text-gray-500">Email</p>
-              <p class="text-gray-800">{{ user?.email }}</p>
+          <div v-if="imageError" class="alert-error">{{ imageError }}</div>
+        </section>
+
+        <form @submit.prevent="saveProfile" class="page-stack">
+          <section class="content-card section-stack">
+            <div class="space-y-1">
+              <h2 class="section-title">Profile info</h2>
+              <p class="section-subtitle">
+                Update the personal details shown on your account.
+              </p>
             </div>
-            <div>
-              <p class="text-gray-500">Account Number</p>
-              <p class="text-gray-800">{{ user?.account_number }}</p>
+
+            <div class="form-grid">
+              <div>
+                <label for="name" class="field-label">Full name</label>
+                <InputText
+                  id="name"
+                  v-model.trim="form.name"
+                  type="text"
+                  placeholder="First Last"
+                  :class="{ 'p-invalid': formErrors.name }"
+                />
+                <p v-if="formErrors.name" class="field-error">{{ formErrors.name }}</p>
+              </div>
+
+              <div>
+                <label class="field-label">Email address</label>
+                <div class="surface-muted">
+                  <p class="text-sm font-medium text-surface-900">{{ user?.email || 'N/A' }}</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p class="text-gray-500">Member Since</p>
-              <p class="text-gray-800">{{ formattedCreatedAt }}</p>
+          </section>
+
+          <section class="content-card section-stack">
+            <div class="space-y-1">
+              <h2 class="section-title">Next of kin</h2>
+              <p class="section-subtitle">
+                Keep your emergency contact information current.
+              </p>
             </div>
-            <div>
-              <p class="text-gray-500">Current Account Type</p>
-              <p class="text-gray-800 capitalize">{{ user?.account_type || 'N/A' }}</p>
+
+            <div class="form-grid">
+              <div>
+                <label for="next_of_kin_name" class="field-label">Next of kin name</label>
+                <InputText
+                  id="next_of_kin_name"
+                  v-model.trim="form.next_of_kin_name"
+                  type="text"
+                  placeholder="Optional"
+                  :class="{ 'p-invalid': formErrors.next_of_kin_name }"
+                />
+                <p v-if="formErrors.next_of_kin_name" class="field-error">{{ formErrors.next_of_kin_name }}</p>
+              </div>
+
+              <div>
+                <label for="next_of_kin_phone" class="field-label">Next of kin phone</label>
+                <InputText
+                  id="next_of_kin_phone"
+                  v-model.trim="form.next_of_kin_phone"
+                  type="text"
+                  placeholder="Optional"
+                  :class="{ 'p-invalid': formErrors.next_of_kin_phone }"
+                />
+                <p v-if="formErrors.next_of_kin_phone" class="field-error">{{ formErrors.next_of_kin_phone }}</p>
+              </div>
             </div>
-          </div>
-        </div>
+          </section>
 
-        <form @submit.prevent="saveProfile" class="bg-white rounded-xl shadow p-6 space-y-4">
-          <h2 class="text-lg font-semibold text-gray-800">Edit Profile</h2>
+          <section class="content-card section-stack">
+            <div class="space-y-1">
+              <h2 class="section-title">Account details</h2>
+              <p class="section-subtitle">
+                Review the account information tied to your profile.
+              </p>
+            </div>
 
-          <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <input
-              id="name"
-              v-model.trim="form.name"
-              type="text"
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="First Last"
-            />
-            <p v-if="formErrors.name" class="text-sm text-red-600 mt-1">{{ formErrors.name }}</p>
-          </div>
+            <div class="key-value-grid">
+              <div>
+                <p class="key-value-label">Account number</p>
+                <p class="key-value-value">{{ user?.account_number || 'N/A' }}</p>
+              </div>
+              <div>
+                <p class="key-value-label">Member since</p>
+                <p class="key-value-value">{{ formattedCreatedAt }}</p>
+              </div>
+            </div>
 
-          <div>
-            <label for="next_of_kin_name" class="block text-sm font-medium text-gray-700 mb-1">Next of Kin Name</label>
-            <input
-              id="next_of_kin_name"
-              v-model.trim="form.next_of_kin_name"
-              type="text"
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Optional"
-            />
-            <p v-if="formErrors.next_of_kin_name" class="text-sm text-red-600 mt-1">{{ formErrors.next_of_kin_name }}</p>
-          </div>
+            <div v-if="allowAccountTypeEdit">
+              <label for="account_type" class="field-label">Account type</label>
+              <Select
+                id="account_type"
+                v-model="form.account_type"
+                :options="accountTypeOptions"
+                optionLabel="label"
+                optionValue="value"
+                :class="{ 'p-invalid': formErrors.account_type }"
+              />
+              <p v-if="formErrors.account_type" class="field-error">{{ formErrors.account_type }}</p>
+            </div>
 
-          <div>
-            <label for="next_of_kin_phone" class="block text-sm font-medium text-gray-700 mb-1">Next of Kin Phone</label>
-            <input
-              id="next_of_kin_phone"
-              v-model.trim="form.next_of_kin_phone"
-              type="text"
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Optional"
-            />
-            <p v-if="formErrors.next_of_kin_phone" class="text-sm text-red-600 mt-1">{{ formErrors.next_of_kin_phone }}</p>
-          </div>
+            <div v-else class="surface-muted">
+              <p class="key-value-label">Current account type</p>
+              <p class="key-value-value capitalize">{{ user?.account_type || 'N/A' }}</p>
+              <p class="field-help">Account type changes are not enabled after signup.</p>
+            </div>
+          </section>
 
-          <div v-if="allowAccountTypeEdit">
-            <label for="account_type" class="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
-            <select
-              id="account_type"
-              v-model="form.account_type"
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="savings">Savings</option>
-              <option value="current">Current</option>
-              <option value="fixed">Fixed</option>
-            </select>
-            <p v-if="formErrors.account_type" class="text-sm text-red-600 mt-1">{{ formErrors.account_type }}</p>
-          </div>
-
-          <p v-else class="text-sm text-gray-500">Account type changes are not enabled after signup.</p>
-
-          <p v-if="formMessage" class="text-sm" :class="formMessageType === 'success' ? 'text-green-600' : 'text-red-600'">
+          <div v-if="formMessage" :class="formMessageType === 'success' ? 'alert-success' : 'alert-error'">
             {{ formMessage }}
-          </p>
+          </div>
 
-          <div>
-            <button
+          <div class="flex">
+            <Button
               type="submit"
               :disabled="saving"
-              class="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >{{ saving ? 'Saving...' : 'Save Changes' }}</button>
+              class="btn-primary"
+              :label="saving ? 'Saving...' : 'Save changes'"
+            />
           </div>
         </form>
       </div>
     </div>
-  </div>
+  </PageWrapper>
 </template>
 
 <script setup>
@@ -142,6 +191,8 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
+import PageWrapper from '@/components/ui/PageWrapper.vue';
+import SectionHeader from '@/components/ui/SectionHeader.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -156,6 +207,11 @@ const imageError = ref('');
 const formMessage = ref('');
 const formMessageType = ref('success');
 const formErrors = ref({});
+const accountTypeOptions = [
+  { label: 'Savings', value: 'savings' },
+  { label: 'Current', value: 'current' },
+  { label: 'Fixed', value: 'fixed' },
+];
 
 // Flip this only when product/business allows account type changes post-signup.
 const allowAccountTypeEdit = false;

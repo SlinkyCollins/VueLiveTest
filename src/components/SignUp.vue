@@ -1,89 +1,92 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50">
-    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
-      <h2 class="text-2xl font-bold text-center mb-6 text-blue-600">
-        Create Bank Account 🏦
-      </h2>
+  <PageWrapper auth>
+    <FormCard
+      title="Create your account"
+      subtitle="Open your Vaultly account and get started with simple everyday banking."
+    >
+      <div class="mb-6 space-y-3">
+        <span class="badge-primary">Vaultly</span>
+        <p class="section-subtitle">
+          Set up your profile details once, then continue straight into your account.
+        </p>
+      </div>
 
-      <form @submit.prevent="submitForm" class="space-y-4">
-
-        <!-- Full Name -->
+      <form @submit.prevent="submitForm" class="form-stack">
         <div>
-          <label class="block text-gray-700 font-medium">Full Name</label>
-          <input
+          <label class="field-label">Full name</label>
+          <InputText
             v-model="form.fullname"
             type="text"
             placeholder="John Doe"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            :class="{ 'p-invalid': errors.fullname }"
           />
-          <p v-if="errors.fullname" class="text-red-500 text-sm mt-1">{{ errors.fullname[0] }}</p>
+          <p v-if="errors.fullname" class="field-error">{{ errors.fullname[0] }}</p>
         </div>
 
-        <!-- Email -->
         <div>
-          <label class="block text-gray-700 font-medium">Email</label>
-          <input
+          <label class="field-label">Email address</label>
+          <InputText
             v-model="form.email"
             type="email"
             placeholder="you@mail.com"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            :class="{ 'p-invalid': errors.email }"
           />
-          <p v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email[0] }}</p>
+          <p v-if="errors.email" class="field-error">{{ errors.email[0] }}</p>
         </div>
 
-        <!-- Password -->
         <div>
-          <label class="block text-gray-700 font-medium">Password</label>
-          <input
+          <label class="field-label">Password</label>
+          <Password
             v-model="form.password"
-            type="password"
-            placeholder="••••••••"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            placeholder="Create a password"
+            :feedback="false"
+            toggleMask
+            fluid
+            :inputClass="errors.password ? 'w-full p-invalid' : 'w-full'"
           />
-          <p v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password[0] }}</p>
+          <p v-if="errors.password" class="field-error">{{ errors.password[0] }}</p>
         </div>
 
-        <!-- Account Type -->
         <div>
-          <label class="block text-gray-700 font-medium mb-1">Account Type</label>
-          <select
+          <label class="field-label">Account type</label>
+          <Select
             v-model="form.accountType"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
-          >
-            <option value="" disabled>Select account type</option>
-            <option
-              v-for="type in accountTypes"
-              :key="type"
-              :value="type"
-            >
-              {{ type }}
-            </option>
-          </select>
-          <p v-if="errors.accountType" class="text-red-500 text-sm mt-1">{{ errors.accountType[0] }}</p>
+            :options="accountTypes"
+            placeholder="Select account type"
+            :class="{ 'p-invalid': errors.accountType }"
+          />
+          <p v-if="errors.accountType" class="field-error">{{ errors.accountType[0] }}</p>
         </div>
 
-        <!-- Submit Button -->
-        <button
-          type="submit"
-          class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-          :disabled="loading"
-        >
-          {{ loading ? 'Signing Up...' : 'Sign Up' }}
-        </button>
+        <div class="space-y-3">
+          <Button
+            type="submit"
+            class="btn-primary w-full"
+            :disabled="loading"
+            :label="loading ? 'Signing up...' : 'Sign up'"
+          />
 
-        <!-- Success & Error Messages -->
-        <p v-if="successMessage" class="text-green-600 text-center mt-3">{{ successMessage }}</p>
-        <p v-if="errorMessage" class="text-red-600 text-center mt-3">{{ errorMessage }}</p>
-
+          <div v-if="successMessage" class="alert-success">{{ successMessage }}</div>
+          <div v-if="errorMessage" class="alert-error">{{ errorMessage }}</div>
+        </div>
       </form>
-    </div>
-  </div>
+
+      <div class="mt-6 border-t border-surface-200 pt-5 text-sm text-surface-500">
+        Already have an account?
+        <RouterLink :to="{ name: 'Login' }" class="font-medium text-brand-600">
+          Log in
+        </RouterLink>
+      </div>
+    </FormCard>
+  </PageWrapper>
 </template>
 
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import api from "@/utils/api";
+import PageWrapper from "@/components/ui/PageWrapper.vue";
+import FormCard from "@/components/ui/FormCard.vue";
 
 const router = useRouter();
 
@@ -140,6 +143,3 @@ const submitForm = async () => {
   }
 };
 </script>
-
-<style scoped>
-</style>

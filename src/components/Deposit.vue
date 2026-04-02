@@ -1,50 +1,61 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
-      <button
-        @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
-        class="text-blue-600 text-sm font-medium hover:underline mb-4 inline-block"
-      >&larr; Back to Dashboard</button>
+  <PageWrapper narrow>
+    <div class="page-stack">
+      <SectionHeader
+        title="Deposit"
+        subtitle="Add money to your Vaultly balance with a single, straightforward workflow."
+        eyebrow="Funding"
+      >
+        <template #actions>
+          <button
+            class="btn-secondary"
+            @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
+          >
+            <span class="pi pi-arrow-left text-sm" />
+            Back to dashboard
+          </button>
+        </template>
+      </SectionHeader>
 
-      <h2 class="text-2xl font-bold text-center mb-6 text-blue-600">Add Money 💰</h2>
+      <FormCard
+        title="Add money"
+        subtitle="Enter a deposit amount and confirm the transaction."
+      >
+        <form @submit.prevent="handleDeposit" class="form-stack">
+          <div class="surface-muted text-center">
+            <p class="stat-label">Current balance</p>
+            <p class="mt-2 text-3xl font-semibold tracking-tight text-brand-700">
+              {{ formatCurrency(authStore.user?.balance) }}
+            </p>
+          </div>
 
-      <form @submit.prevent="handleDeposit" class="space-y-4">
-        <!-- Current Balance -->
-        <div class="bg-gray-50 rounded-lg p-4 text-center">
-          <p class="text-sm text-gray-500">Current Balance</p>
-          <p class="text-2xl font-bold text-blue-600">
-            ₦{{ authStore.user ? Number(authStore.user.balance).toLocaleString('en-NG', { minimumFractionDigits: 2 }) : '0.00' }}
-          </p>
-        </div>
+          <div>
+            <label class="field-label">Amount (₦)</label>
+            <InputText
+              v-model="amount"
+              type="number"
+              min="100"
+              step="0.01"
+              placeholder="Enter amount (minimum ₦100)"
+              :class="{ 'p-invalid': errors.amount }"
+              @input="clearErrors"
+            />
+            <p v-if="errors.amount" class="field-error">{{ errors.amount }}</p>
+          </div>
 
-        <!-- Amount Input -->
-        <div>
-          <label class="block text-gray-700 font-medium">Amount (₦)</label>
-          <input
-            v-model="amount"
-            @input="clearErrors"
-            type="number"
-            min="100"
-            step="0.01"
-            placeholder="Enter amount (min ₦100)"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            :class="{ 'border-red-500': errors.amount }"
+          <div v-if="successMessage" class="alert-success">{{ successMessage }}</div>
+          <div v-if="errorMessage" class="alert-error">{{ errorMessage }}</div>
+
+          <Button
+            type="submit"
+            class="btn-primary w-full"
+            :disabled="loading"
+            :label="loading ? 'Processing...' : 'Deposit'"
           />
-          <p v-if="errors.amount" class="text-red-500 text-sm mt-1">{{ errors.amount }}</p>
-        </div>
-
-        <!-- Submit -->
-        <button
-          type="submit"
-          class="w-full py-2 px-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="loading"
-        >{{ loading ? 'Processing...' : 'Deposit' }}</button>
-
-        <p v-if="successMessage" class="text-green-600 text-center text-sm mt-3">{{ successMessage }}</p>
-        <p v-if="errorMessage" class="text-red-600 text-center text-sm mt-3">{{ errorMessage }}</p>
-      </form>
+        </form>
+      </FormCard>
     </div>
-  </div>
+  </PageWrapper>
 </template>
 
 <script setup>
@@ -52,6 +63,9 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
+import PageWrapper from '@/components/ui/PageWrapper.vue';
+import SectionHeader from '@/components/ui/SectionHeader.vue';
+import FormCard from '@/components/ui/FormCard.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -62,6 +76,7 @@ const loading = ref(false);
 const errors = ref({});
 const errorMessage = ref('');
 const successMessage = ref('');
+const formatCurrency = (value) => `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
 
 onMounted(async () => {
   if (!authStore.user) {
