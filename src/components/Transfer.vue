@@ -49,11 +49,6 @@
               :loading="loadingBeneficiaries"
               showClear
             />
-
-            <div v-if="selectedBeneficiaryId" class="alert-info">
-              Saved beneficiary selected. Recipient details are filled automatically.
-            </div>
-            <p v-if="beneficiariesError" class="field-error">{{ beneficiariesError }}</p>
           </div>
 
           <div>
@@ -106,8 +101,6 @@
             </div>
           </div>
 
-          <div v-if="errorMessage" class="alert-error">{{ errorMessage }}</div>
-
           <Button
             type="submit"
             class="btn-primary w-full"
@@ -154,17 +147,13 @@
             <p v-if="errors.pin" class="field-error">{{ errors.pin }}</p>
           </div>
 
-          <div v-if="!hasTransactionPin" class="alert-warning">
-            <p>You need to set a transaction PIN before sending money.</p>
-            <button
-              class="btn-primary mt-3"
-              @click="router.push({ name: 'SetPin', params: { userId: String(route.params.userId) } })"
-            >
-              Set PIN
-            </button>
-          </div>
-
-          <div v-if="errorMessage" class="alert-error">{{ errorMessage }}</div>
+          <button
+            v-if="!hasTransactionPin"
+            class="btn-secondary w-full"
+            @click="router.push({ name: 'SetPin', params: { userId: String(route.params.userId) } })"
+          >
+            Set transaction PIN
+          </button>
 
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button class="btn-secondary w-full" @click="step = 1">Cancel</button>
@@ -196,7 +185,6 @@
               New balance: {{ formatCurrency(authStore.user?.balance) }}
             </p>
           </div>
-          <div v-if="successMessage" class="alert-success text-left">{{ successMessage }}</div>
           <button
             class="btn-primary w-full"
             @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
@@ -212,6 +200,7 @@
 <script setup>
 import { computed, ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useToast } from 'primevue/usetoast';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import { useInputNormalization } from '@/composables/useInputNormalization';
@@ -221,6 +210,7 @@ import FormCard from '@/components/ui/FormCard.vue';
 
 const router = useRouter();
 const route = useRoute();
+const toast = useToast();
 const authStore = useAuthStore();
 const { normalizeFieldDigits, normalizeRefDigits } = useInputNormalization();
 
@@ -235,10 +225,7 @@ const verifiedName = ref('');
 const verifying = ref(false);
 const transferring = ref(false);
 const errors = ref({});
-const errorMessage = ref('');
-const successMessage = ref('');
 const beneficiaries = ref([]);
-const beneficiariesError = ref('');
 const loadingBeneficiaries = ref(false);
 const selectedBeneficiaryId = ref('');
 const saveBeneficiary = ref(false);
@@ -262,7 +249,12 @@ onMounted(async () => {
         return;
       }
 
-      errorMessage.value = 'Unable to load your account details. Please try again.';
+      toast.add({
+        severity: 'error',
+        summary: 'Unable to load account',
+        detail: 'Please try again.',
+        life: 4000,
+      });
       return;
     }
   }
@@ -274,7 +266,12 @@ onMounted(async () => {
       router.push({ name: 'Login' });
       return;
     }
-    errorMessage.value = 'Unable to refresh your balance right now.';
+    toast.add({
+      severity: 'warn',
+      summary: 'Balance refresh failed',
+      detail: 'Unable to refresh your balance right now.',
+      life: 3500,
+    });
   }
 
   if (route.query.beneficiaryId) {
@@ -288,18 +285,31 @@ onMounted(async () => {
 
 const fetchBeneficiaries = async () => {
   loadingBeneficiaries.value = true;
-  beneficiariesError.value = '';
 
   try {
     const res = await api.get('/beneficiaries');
     beneficiaries.value = res.data.beneficiaries || [];
     syncSelectedBeneficiary();
+
+    if (!selectedBeneficiaryId.value) {
+      applyMatchedBeneficiaryFromAccountInput(form.value.account_number);
+    }
   } catch (err) {
     beneficiaries.value = [];
     if (err.code === 'ERR_NETWORK') {
-      beneficiariesError.value = 'Unable to load saved beneficiaries. Please check your connection.';
+      toast.add({
+        severity: 'warn',
+        summary: 'Saved beneficiaries unavailable',
+        detail: 'Please check your connection.',
+        life: 3500,
+      });
     } else {
-      beneficiariesError.value = 'Unable to load saved beneficiaries. Please try again later.';
+      toast.add({
+        severity: 'error',
+        summary: 'Saved beneficiaries unavailable',
+        detail: 'Please try again later.',
+        life: 3500,
+      });
     }
   } finally {
     loadingBeneficiaries.value = false;
@@ -324,6 +334,38 @@ const syncSelectedBeneficiary = () => {
   return selected;
 };
 
+const findBeneficiaryByAccountNumber = (accountNumber) => {
+  if (!accountNumber || !/^\d{12}$/.test(accountNumber)) {
+    return null;
+  }
+
+  return beneficiaries.value.find((item) => item.account_number === accountNumber) || null;
+};
+
+const applyMatchedBeneficiaryFromAccountInput = (accountNumber) => {
+  const matched = findBeneficiaryByAccountNumber(accountNumber);
+
+  if (!matched) {
+    return false;
+  }
+
+  // Mirror beneficiary-dropdown behavior for a consistent flow.
+  selectedBeneficiaryId.value = String(matched.id);
+  form.value.account_number = matched.account_number;
+  form.value.bank_name = matched.bank_name;
+  saveBeneficiary.value = false;
+  verifiedName.value = matched.account_name;
+
+  toast.add({
+    severity: 'info',
+    summary: 'Saved beneficiary detected',
+    detail: 'Recipient matched a saved beneficiary. Verification will be skipped.',
+    life: 3000,
+  });
+
+  return true;
+};
+
 watch(selectedBeneficiaryId, (value) => {
   if (!value) {
     form.value.account_number = '';
@@ -338,19 +380,22 @@ watch(selectedBeneficiaryId, (value) => {
 
 const clearErrors = () => {
   errors.value = {};
-  errorMessage.value = '';
-  successMessage.value = '';
 };
 
 const onAccountNumberInput = () => {
   normalizeFieldDigits(form, 'account_number', 12);
   clearErrors();
+
+  if (selectedBeneficiaryId.value) {
+    return;
+  }
+
+  applyMatchedBeneficiaryFromAccountInput(form.value.account_number);
 };
 
 const onPinInput = () => {
   normalizeRefDigits(pin, 4);
   errors.value.pin = '';
-  errorMessage.value = '';
 };
 
 const validateStep1 = () => {
@@ -383,19 +428,26 @@ const validateStep1 = () => {
 };
 
 const handleVerify = async () => {
-  errorMessage.value = '';
-  successMessage.value = '';
-
   if (selectedBeneficiaryId.value) {
     if (loadingBeneficiaries.value) {
-      errorMessage.value = 'Loading selected beneficiary. Please wait a moment.';
+      toast.add({
+        severity: 'info',
+        summary: 'Please wait',
+        detail: 'Loading selected beneficiary.',
+        life: 2500,
+      });
       return;
     }
 
     const selected = syncSelectedBeneficiary();
 
     if (!selected) {
-      errorMessage.value = 'Saved beneficiary not found. Please select again.';
+      toast.add({
+        severity: 'warn',
+        summary: 'Beneficiary not found',
+        detail: 'Please select a saved beneficiary again.',
+        life: 3000,
+      });
       return;
     }
 
@@ -423,13 +475,28 @@ const handleVerify = async () => {
       const serverErrors = res.data.msg;
       if (serverErrors.account_number) errors.value.account_number = serverErrors.account_number[0];
     } else {
-      errorMessage.value = res.data.msg;
+      toast.add({
+        severity: 'error',
+        summary: 'Verification failed',
+        detail: res.data.msg || 'Please try again.',
+        life: 3500,
+      });
     }
   } catch (err) {
     if (err.code === 'ERR_NETWORK') {
-      errorMessage.value = 'Unable to connect to the server.';
+      toast.add({
+        severity: 'error',
+        summary: 'Connection error',
+        detail: 'Unable to connect to the server.',
+        life: 3500,
+      });
     } else {
-      errorMessage.value = 'Verification failed. Please try again.';
+      toast.add({
+        severity: 'error',
+        summary: 'Verification failed',
+        detail: 'Please try again.',
+        life: 3500,
+      });
     }
   } finally {
     verifying.value = false;
@@ -437,11 +504,13 @@ const handleVerify = async () => {
 };
 
 const handleTransfer = async () => {
-  errorMessage.value = '';
-  successMessage.value = '';
-
   if (!hasTransactionPin.value) {
-    errorMessage.value = 'Please set your transaction PIN before making transfers.';
+    toast.add({
+      severity: 'warn',
+      summary: 'Transaction PIN required',
+      detail: 'Please set your transaction PIN before making transfers.',
+      life: 3500,
+    });
     return;
   }
 
@@ -465,22 +534,47 @@ const handleTransfer = async () => {
     if (res.data.status === '200') {
       authStore.updateBalance(res.data.new_balance);
       if (res.data.beneficiary_saved) {
-        successMessage.value = 'Transfer successful and beneficiary saved.';
+        toast.add({
+          severity: 'success',
+          summary: 'Beneficiary saved',
+          detail: 'Transfer successful and beneficiary saved.',
+          life: 3000,
+        });
         fetchBeneficiaries();
       }
       step.value = 3;
     } else if (res.data.status === '401') {
       errors.value.pin = res.data.msg;
     } else if (res.data.status === '403') {
-      errorMessage.value = res.data.msg;
+      toast.add({
+        severity: 'warn',
+        summary: 'Transfer blocked',
+        detail: res.data.msg || 'Transfer could not be completed.',
+        life: 3500,
+      });
     } else {
-      errorMessage.value = res.data.msg;
+      toast.add({
+        severity: 'error',
+        summary: 'Transfer failed',
+        detail: res.data.msg || 'Please try again.',
+        life: 3500,
+      });
     }
   } catch (err) {
     if (err.code === 'ERR_NETWORK') {
-      errorMessage.value = 'Unable to connect to the server.';
+      toast.add({
+        severity: 'error',
+        summary: 'Connection error',
+        detail: 'Unable to connect to the server.',
+        life: 3500,
+      });
     } else {
-      errorMessage.value = 'Transfer failed. Please try again.';
+      toast.add({
+        severity: 'error',
+        summary: 'Transfer failed',
+        detail: 'Please try again.',
+        life: 3500,
+      });
     }
   } finally {
     transferring.value = false;
