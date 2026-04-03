@@ -1,79 +1,49 @@
 <template>
   <PageWrapper>
     <div class="page-stack">
-      <SectionHeader
-        title="Beneficiaries"
-        subtitle="Save trusted recipients so transfers stay quick and consistent."
-        eyebrow="Recipients"
-      >
+      <SectionHeader title="Beneficiaries" subtitle="Save trusted recipients so transfers stay quick and consistent."
+        eyebrow="Recipients">
         <template #actions>
-          <button
-            class="btn-secondary"
-            @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
-          >
+          <button class="btn-secondary"
+            @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })">
             <span class="pi pi-arrow-left text-sm" />
             Back to dashboard
           </button>
         </template>
       </SectionHeader>
 
-      <FormCard
-        :title="editingId ? 'Edit beneficiary' : 'Add beneficiary'"
-        subtitle="Store a Vaultly recipient once, then reuse the details during transfers."
-      >
+      <FormCard :title="editingId ? 'Edit beneficiary' : 'Add beneficiary'"
+        subtitle="Store a Vaultly recipient once, then reuse the details during transfers.">
         <form @submit.prevent="handleAdd" class="form-stack">
           <div class="form-grid">
             <div>
               <label class="field-label">Account number</label>
-              <InputText
-                v-model="form.account_number"
-                @input="onAccountNumberInput"
-                type="text"
-                maxlength="12"
-                inputmode="numeric"
-                placeholder="12-digit account number"
-                :class="{ 'p-invalid': errors.account_number }"
-              />
+              <InputText v-model="form.account_number" @input="onAccountNumberInput" type="text" maxlength="12"
+                inputmode="numeric" placeholder="12-digit account number"
+                :class="{ 'p-invalid': errors.account_number }" />
               <p v-if="errors.account_number" class="field-error">{{ errors.account_number }}</p>
             </div>
 
             <div>
               <label class="field-label">Bank name</label>
-              <InputText
-                v-model="form.bank_name"
-                type="text"
-                disabled
-                placeholder="Vaultly Bank"
-                :class="{ 'p-invalid': errors.bank_name }"
-              />
+              <InputText v-model="form.bank_name" type="text" disabled placeholder="Vaultly Bank"
+                :class="{ 'p-invalid': errors.bank_name }" />
               <p v-if="errors.bank_name" class="field-error">{{ errors.bank_name }}</p>
             </div>
           </div>
 
-          <div v-if="successMessage" class="alert-success">{{ successMessage }}</div>
-          <div v-if="errorMessage" class="alert-error">{{ errorMessage }}</div>
-
           <div class="flex flex-col gap-3 sm:flex-row">
-            <Button
-              type="submit"
-              :disabled="submitting"
-              class="btn-primary"
-              :label="submitting ? 'Saving...' : (editingId ? 'Update beneficiary' : 'Save beneficiary')"
-            />
+            <Button type="submit" :disabled="submitting" class="btn-primary"
+              :label="submitting ? 'Saving...' : (editingId ? 'Update beneficiary' : 'Save beneficiary')" />
 
-            <button
-              v-if="editingId"
-              type="button"
-              @click="cancelEdit"
-              class="btn-secondary"
-            >
+            <button v-if="editingId" type="button" @click="cancelEdit" class="btn-secondary">
               Cancel edit
             </button>
           </div>
         </form>
       </FormCard>
 
-      <section class="content-card section-stack">
+      <section class="content-card section-stack overflow-visible">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="space-y-1">
             <h2 class="section-title">Saved beneficiaries</h2>
@@ -81,15 +51,20 @@
               Reuse stored recipients for faster transfers and fewer manual steps.
             </p>
           </div>
+
           <button class="btn-secondary" @click="fetchBeneficiaries">
             <span class="pi pi-refresh text-sm" />
             Refresh
           </button>
         </div>
 
-        <div v-if="loading" class="empty-state min-h-56">
-          <span class="pi pi-spin pi-spinner text-2xl text-brand-600" />
-          <p>Loading beneficiaries...</p>
+        <div v-if="loading" class="min-h-56">
+          <div class="w-full space-y-3 pt-1">
+            <Skeleton height="2.75rem" borderRadius="1rem" />
+            <Skeleton height="4.75rem" borderRadius="1rem" />
+            <Skeleton height="4.75rem" borderRadius="1rem" />
+            <Skeleton height="4.75rem" borderRadius="1rem" />
+          </div>
         </div>
 
         <div v-else-if="beneficiaries.length === 0" class="empty-state min-h-56">
@@ -97,47 +72,94 @@
           <p>No beneficiaries saved yet.</p>
         </div>
 
-        <div v-else class="table-list">
-          <article
-            v-for="beneficiary in beneficiaries"
-            :key="beneficiary.id"
-            class="table-row"
-          >
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div class="space-y-1.5">
-                <div class="flex flex-wrap items-center gap-2">
-                  <p class="text-sm font-semibold text-surface-900">{{ beneficiary.account_name }}</p>
-                  <span class="badge-primary">Vaultly</span>
+        <div v-else class="w-full overflow-visible">
+          <Menu ref="actionMenu" :model="actionItems" popup appendTo="body" />
+
+          <div class="overflow-visible rounded-2xl border border-surface-200 bg-white">
+            <!-- Desktop table header -->
+            <div
+              class="hidden md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,2.2fr)_auto_auto] md:items-center gap-4 border-b border-surface-200 bg-surface-50 px-5 py-3">
+              <span class="text-xs font-semibold uppercase tracking-wide text-surface-500">
+                Account name
+              </span>
+              <span class="text-xs font-semibold uppercase tracking-wide text-surface-500">
+                Bank details
+              </span>
+              <span class="text-xs font-semibold uppercase tracking-wide text-surface-500 text-right">
+                Transfer
+              </span>
+              <span class="text-xs font-semibold uppercase tracking-wide text-surface-500 text-right">
+                More
+              </span>
+            </div>
+
+            <!-- Rows -->
+            <article v-for="beneficiary in beneficiaries" :key="beneficiary.id"
+              class="border-b border-surface-200 last:border-b-0">
+              <!-- Mobile card -->
+              <div class="flex flex-col gap-4 px-4 py-4 md:hidden">
+                <div class="space-y-2 min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p class="text-sm font-semibold text-surface-900 wrap-break-word">
+                      {{ beneficiary.account_name }}
+                    </p>
+                  </div>
+
+                  <p class="text-sm text-surface-500 wrap-break-word">
+                    {{ beneficiary.account_number }} | {{ beneficiary.bank_name }}
+                    ({{ beneficiary.bank_code || 'N/A' }})
+                  </p>
                 </div>
-                <p class="text-sm text-surface-500">
-                  {{ beneficiary.account_number }} | {{ beneficiary.bank_name }} ({{ beneficiary.bank_code || 'N/A' }})
-                </p>
+
+                <div class="flex items-center justify-between gap-3">
+                  <button @click="useForTransfer(beneficiary)" class="btn-primary">
+                    Transfer
+                  </button>
+
+                  <button type="button" class="btn-secondary px-3!" @click="openActionMenu($event, beneficiary)"
+                    aria-label="Open beneficiary actions">
+                    <span class="pi pi-ellipsis-v" />
+                  </button>
+                </div>
               </div>
 
-              <div class="flex flex-col gap-2 sm:flex-row">
-                <button
-                  @click="useForTransfer(beneficiary)"
-                  class="btn-primary"
-                >
-                  Transfer
-                </button>
-                <button
-                  @click="startEdit(beneficiary)"
-                  class="btn-secondary"
-                >
-                  Edit
-                </button>
-                <button
-                  @click="handleDelete(beneficiary.id)"
-                  class="btn-danger"
-                >
-                  Delete
-                </button>
+              <!-- Desktop row -->
+              <div
+                class="hidden md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,2.2fr)_auto_auto] md:items-center gap-4 px-5 py-4">
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p class="truncate text-sm font-semibold text-surface-900">
+                      {{ beneficiary.account_name }}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="min-w-0">
+                  <p class="truncate text-sm text-surface-500">
+                    {{ beneficiary.account_number }} | {{ beneficiary.bank_name }}
+                    ({{ beneficiary.bank_code || 'N/A' }})
+                  </p>
+                </div>
+
+                <div class="flex justify-end">
+                  <button @click="useForTransfer(beneficiary)" class="btn-primary">
+                    Transfer
+                  </button>
+                </div>
+
+                <div class="flex justify-end overflow-visible">
+                  <button type="button" class="btn-secondary px-3!" @click="openActionMenu($event, beneficiary)"
+                    aria-label="Open beneficiary actions">
+                    <span class="pi pi-ellipsis-v" />
+                  </button>
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
+          </div>
         </div>
       </section>
+
+      <ConfirmDialog />
     </div>
   </PageWrapper>
 </template>
@@ -145,15 +167,21 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
+import Skeleton from 'primevue/skeleton';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import { useInputNormalization } from '@/composables/useInputNormalization';
 import PageWrapper from '@/components/ui/PageWrapper.vue';
 import SectionHeader from '@/components/ui/SectionHeader.vue';
 import FormCard from '@/components/ui/FormCard.vue';
+import Menu from 'primevue/menu';
 
 const router = useRouter();
 const route = useRoute();
+const toast = useToast();
+const confirm = useConfirm();
 const authStore = useAuthStore();
 const { normalizeFieldDigits } = useInputNormalization();
 
@@ -162,22 +190,44 @@ const submitting = ref(false);
 const editingId = ref(null);
 const beneficiaries = ref([]);
 const errors = ref({});
-const errorMessage = ref('');
-const successMessage = ref('');
+const editSnapshot = ref(null);
+
+const actionMenu = ref();
+const selectedBeneficiary = ref(null);
 
 const form = ref({
   account_number: '',
   bank_name: 'Vaultly Bank',
 });
 
-const clearMessages = () => {
-  errorMessage.value = '';
-  successMessage.value = '';
+const actionItems = ref([
+  {
+    label: 'Edit',
+    icon: 'pi pi-pencil',
+    command: () => {
+      if (selectedBeneficiary.value) {
+        startEdit(selectedBeneficiary.value);
+      }
+    },
+  },
+  {
+    label: 'Delete',
+    icon: 'pi pi-trash',
+    command: () => {
+      if (selectedBeneficiary.value) {
+        handleDelete(selectedBeneficiary.value.id);
+      }
+    },
+  },
+]);
+
+const openActionMenu = (event, beneficiary) => {
+  selectedBeneficiary.value = beneficiary;
+  actionMenu.value?.toggle(event);
 };
 
 const clearErrors = () => {
   errors.value = {};
-  clearMessages();
 };
 
 const onAccountNumberInput = () => {
@@ -214,16 +264,33 @@ const fetchBeneficiaries = async () => {
     const res = await api.get('/beneficiaries');
     beneficiaries.value = res.data.beneficiaries || [];
   } catch (err) {
-    errorMessage.value = err.code === 'ERR_NETWORK'
-      ? 'Unable to connect to the server.'
-      : 'Failed to fetch beneficiaries.';
+    toast.add({
+      severity: 'error',
+      summary: 'Unable to load beneficiaries',
+      detail: err.code === 'ERR_NETWORK' ? 'Unable to connect to the server.' : 'Failed to fetch beneficiaries.',
+      life: 3500,
+    });
   } finally {
     loading.value = false;
   }
 };
 
 const handleAdd = async () => {
-  clearMessages();
+  if (editingId.value && editSnapshot.value) {
+    const unchangedAccount = String(form.value.account_number).trim() === String(editSnapshot.value.account_number).trim();
+    const unchangedBank = String(form.value.bank_name).trim() === String(editSnapshot.value.bank_name).trim();
+
+    if (unchangedAccount && unchangedBank) {
+      toast.add({
+        severity: 'info',
+        summary: 'No changes made',
+        detail: 'Beneficiary details are unchanged.',
+        life: 2500,
+      });
+      return;
+    }
+  }
+
   if (!validate()) return;
 
   submitting.value = true;
@@ -234,8 +301,14 @@ const handleAdd = async () => {
     const res = await api[method](endpoint, form.value);
 
     if (res.data.status === '200') {
-      successMessage.value = res.data.msg;
+      toast.add({
+        severity: 'success',
+        summary: editingId.value ? 'Beneficiary updated' : 'Beneficiary saved',
+        detail: res.data.msg || 'Beneficiary saved successfully.',
+        life: 3000,
+      });
       editingId.value = null;
+      editSnapshot.value = null;
       resetForm();
       fetchBeneficiaries();
     } else if (res.data.status === '422') {
@@ -245,12 +318,22 @@ const handleAdd = async () => {
         bank_name: serverErrors.bank_name?.[0],
       };
     } else {
-      errorMessage.value = res.data.msg || 'Unable to save beneficiary.';
+      toast.add({
+        severity: 'error',
+        summary: 'Unable to save beneficiary',
+        detail: res.data.msg || 'Unable to save beneficiary.',
+        life: 3500,
+      });
     }
   } catch (err) {
-    errorMessage.value = err.code === 'ERR_NETWORK'
-      ? 'Unable to connect to the server.'
-      : err.response?.data?.msg || 'Unable to save beneficiary.';
+    toast.add({
+      severity: 'error',
+      summary: 'Unable to save beneficiary',
+      detail: err.code === 'ERR_NETWORK'
+        ? 'Unable to connect to the server.'
+        : err.response?.data?.msg || 'Unable to save beneficiary.',
+      life: 3500,
+    });
   } finally {
     submitting.value = false;
   }
@@ -259,6 +342,10 @@ const handleAdd = async () => {
 const startEdit = (beneficiary) => {
   clearErrors();
   editingId.value = beneficiary.id;
+  editSnapshot.value = {
+    account_number: beneficiary.account_number,
+    bank_name: beneficiary.bank_name,
+  };
   form.value = {
     account_number: beneficiary.account_number,
     bank_name: beneficiary.bank_name,
@@ -267,30 +354,58 @@ const startEdit = (beneficiary) => {
 
 const cancelEdit = () => {
   editingId.value = null;
+  editSnapshot.value = null;
   clearErrors();
   resetForm();
 };
 
 const handleDelete = async (id) => {
-  clearMessages();
-
-  if (!confirm('Delete this beneficiary?')) {
-    return;
-  }
-
-  try {
-    const res = await api.delete(`/beneficiaries/${id}`);
-    if (res.data.status === '200') {
-      successMessage.value = res.data.msg;
-      beneficiaries.value = beneficiaries.value.filter((item) => item.id !== id);
-    } else {
-      errorMessage.value = res.data.msg || 'Unable to delete beneficiary.';
-    }
-  } catch (err) {
-    errorMessage.value = err.code === 'ERR_NETWORK'
-      ? 'Unable to connect to the server.'
-      : err.response?.data?.msg || 'Unable to delete beneficiary.';
-  }
+  confirm.require({
+    header: 'Delete beneficiary',
+    message: 'Are you sure you want to delete this beneficiary?',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Delete',
+    rejectLabel: 'Cancel',
+    acceptClass: 'p-button-danger',
+    accept: async () => {
+      try {
+        const res = await api.delete(`/beneficiaries/${id}`);
+        if (res.data.status === '200') {
+          toast.add({
+            severity: 'success',
+            summary: 'Beneficiary deleted',
+            detail: res.data.msg || 'Beneficiary deleted successfully.',
+            life: 3000,
+          });
+          beneficiaries.value = beneficiaries.value.filter((item) => item.id !== id);
+        } else {
+          toast.add({
+            severity: 'error',
+            summary: 'Unable to delete beneficiary',
+            detail: res.data.msg || 'Unable to delete beneficiary.',
+            life: 3500,
+          });
+        }
+      } catch (err) {
+        toast.add({
+          severity: 'error',
+          summary: 'Unable to delete beneficiary',
+          detail: err.code === 'ERR_NETWORK'
+            ? 'Unable to connect to the server.'
+            : err.response?.data?.msg || 'Unable to delete beneficiary.',
+          life: 3500,
+        });
+      }
+    },
+    reject: () => {
+      toast.add({
+        severity: 'info',
+        summary: 'Cancelled',
+        detail: 'Delete action was cancelled.',
+        life: 2000,
+      });
+    },
+  });
 };
 
 const useForTransfer = (beneficiary) => {
@@ -314,7 +429,12 @@ onMounted(async () => {
         router.push({ name: 'Login' });
         return;
       }
-      errorMessage.value = 'Unable to load your account details. Please try again.';
+      toast.add({
+        severity: 'error',
+        summary: 'Unable to load account',
+        detail: 'Please try again.',
+        life: 3500,
+      });
       return;
     }
   }
