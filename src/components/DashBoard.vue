@@ -3,7 +3,17 @@
     <div class="page-stack">
       <SectionHeader title="Dashboard"
         :subtitle="user ? `Welcome back, ${user.name}. Here's your latest account overview.` : 'Review your account summary and next actions.'"
-        eyebrow="Vaultly" />
+        eyebrow="Vaultly">
+        <template #actions>
+          <UserAvatarMenu
+            :user="user"
+            :loggingOut="loggingOut"
+            @profile="goToProfile"
+            @settings="goToSettings"
+            @logout="requestLogout"
+          />
+        </template>
+      </SectionHeader>
 
       <div v-if="loading" class="empty-state min-h-72">
         <div class="w-full max-w-4xl space-y-4 pt-2">
@@ -143,19 +153,6 @@
           </div>
         </section>
 
-        <section class="content-card section-stack">
-          <div class="flex items-center justify-between gap-3">
-            <div class="space-y-1">
-              <h2 class="section-title">Session</h2>
-              <p class="section-subtitle">Sign out securely when you are done.</p>
-            </div>
-
-            <button class="btn-danger" :disabled="loggingOut" @click="requestLogout">
-              <span class="pi pi-sign-out text-sm" />
-              {{ loggingOut ? 'Logging out...' : 'Logout' }}
-            </button>
-          </div>
-        </section>
       </div>
 
       <ConfirmDialog />
@@ -174,6 +171,7 @@ import { useAuthStore } from '@/stores/auth';
 import PageWrapper from '@/components/ui/PageWrapper.vue';
 import SectionHeader from '@/components/ui/SectionHeader.vue';
 import StatCard from '@/components/ui/StatCard.vue';
+import UserAvatarMenu from '@/components/ui/UserAvatarMenu.vue';
 
 const loading = ref(true);
 const errorMessage = ref('');
@@ -192,6 +190,33 @@ const formatAccountType = (value) => {
   if (!value) return '';
   const normalized = String(value);
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
+
+const goToProfile = () => {
+  if (!user.value?.id) {
+    return;
+  }
+
+  router.push({ name: 'Profile', params: { userId: String(user.value.id) } });
+};
+
+const goToSettings = () => {
+  if (!user.value?.id) {
+    return;
+  }
+
+  router.push({
+    name: 'Profile',
+    params: { userId: String(user.value.id) },
+    query: { section: 'settings' },
+  });
+
+  toast.add({
+    severity: 'info',
+    summary: 'Settings',
+    detail: 'Account settings are available in your profile page.',
+    life: 2200,
+  });
 };
 
 const performLogout = async () => {
