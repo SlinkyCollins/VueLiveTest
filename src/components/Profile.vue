@@ -18,8 +18,14 @@
       </SectionHeader>
 
       <div v-if="loading" class="empty-state min-h-64">
-        <span class="pi pi-spin pi-spinner text-2xl text-brand-600" />
-        <p>Loading profile...</p>
+        <div class="w-full max-w-4xl space-y-4 pt-2">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <Skeleton height="8.5rem" borderRadius="1rem" />
+            <Skeleton height="8.5rem" borderRadius="1rem" />
+            <Skeleton height="8.5rem" borderRadius="1rem" />
+          </div>
+          <Skeleton height="10.5rem" borderRadius="1rem" />
+        </div>
       </div>
 
       <div v-else class="page-stack">
@@ -60,7 +66,6 @@
             </div>
           </div>
 
-          <div v-if="imageError" class="alert-error">{{ imageError }}</div>
         </section>
 
         <form @submit.prevent="saveProfile" class="page-stack">
@@ -168,10 +173,6 @@
             </div>
           </section>
 
-          <div v-if="formMessage" :class="formMessageType === 'success' ? 'alert-success' : 'alert-error'">
-            {{ formMessage }}
-          </div>
-
           <div class="flex">
             <Button
               type="submit"
@@ -189,6 +190,8 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import Skeleton from 'primevue/skeleton';
+import { useToast } from 'primevue/usetoast';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import PageWrapper from '@/components/ui/PageWrapper.vue';
@@ -197,15 +200,13 @@ import SectionHeader from '@/components/ui/SectionHeader.vue';
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const toast = useToast();
 
 const loading = ref(true);
 const saving = ref(false);
 const uploadingImage = ref(false);
 const removingImage = ref(false);
 const imagePreview = ref('');
-const imageError = ref('');
-const formMessage = ref('');
-const formMessageType = ref('success');
 const formErrors = ref({});
 const accountTypeOptions = [
   { label: 'Savings', value: 'savings' },
@@ -215,10 +216,12 @@ const accountTypeOptions = [
 
 // Flip this only when product/business allows account type changes post-signup.
 const allowAccountTypeEdit = false;
-
-const fallbackAvatar = 'https://ui-avatars.com/api/?name=Vaultly+User&background=E5E7EB&color=374151';
-
 const user = computed(() => authStore.user);
+
+const fallbackAvatar = computed(() => {
+  return `https://ui-avatars.com/api/?name=${user.value?.name || "User"}&background=E5E7EB&color=374151`;
+});
+
 const formattedCreatedAt = computed(() => {
   if (!user.value?.created_at) return 'N/A';
   return new Date(user.value.created_at).toLocaleDateString();
@@ -255,7 +258,12 @@ const withCacheBust = (value) => {
 };
 
 const handleImageLoadError = () => {
-  imageError.value = 'Failed to load profile image. Showing fallback avatar.';
+  toast.add({
+    severity: 'warn',
+    summary: 'Image preview unavailable',
+    detail: 'Failed to load profile image. Showing fallback avatar.',
+    life: 2800,
+  });
   imagePreview.value = '';
 };
 
@@ -286,7 +294,6 @@ const normalizeProfileValidation = (msg) => {
 
 const fetchProfile = async () => {
   loading.value = true;
-  formMessage.value = '';
   formErrors.value = {};
 
   try {
@@ -294,8 +301,12 @@ const fetchProfile = async () => {
     authStore.setUser(res.data.user);
     hydrateForm(res.data.user);
   } catch (err) {
-    formMessageType.value = 'error';
-    formMessage.value = 'Failed to load profile.';
+    toast.add({
+      severity: 'error',
+      summary: 'Failed to load profile',
+      detail: 'Please try again.',
+      life: 3200,
+    });
   } finally {
     loading.value = false;
   }
@@ -303,7 +314,6 @@ const fetchProfile = async () => {
 
 const saveProfile = async () => {
   saving.value = true;
-  formMessage.value = '';
   formErrors.value = {};
 
   const payload = {
@@ -320,16 +330,28 @@ const saveProfile = async () => {
     const res = await api.put('/profile', payload);
     authStore.setUser(res.data.user);
     hydrateForm(res.data.user);
-    formMessageType.value = 'success';
-    formMessage.value = res.data.msg || 'Profile updated successfully!';
+    toast.add({
+      severity: 'success',
+      summary: 'Profile updated',
+      detail: res.data.msg || 'Profile updated successfully!',
+      life: 2600,
+    });
   } catch (err) {
     if (err.response?.status === 422) {
       formErrors.value = normalizeProfileValidation(err.response?.data?.msg);
-      formMessageType.value = 'error';
-      formMessage.value = 'Please fix the highlighted fields.';
+      toast.add({
+        severity: 'warn',
+        summary: 'Validation required',
+        detail: 'Please fix the highlighted fields.',
+        life: 3000,
+      });
     } else {
-      formMessageType.value = 'error';
-      formMessage.value = err.response?.data?.msg || 'Profile update failed.';
+      toast.add({
+        severity: 'error',
+        summary: 'Profile update failed',
+        detail: err.response?.data?.msg || 'Profile update failed.',
+        life: 3200,
+      });
     }
   } finally {
     saving.value = false;
@@ -338,9 +360,14 @@ const saveProfile = async () => {
 
 const handleImageSelected = async (event) => {
   const file = event.target.files?.[0];
-  imageError.value = '';
 
   if (!file) {
+    toast.add({
+      severity: 'info',
+      summary: 'No file selected',
+      detail: 'Select an image to upload.',
+      life: 2200,
+    });
     return;
   }
 
@@ -356,12 +383,28 @@ const handleImageSelected = async (event) => {
 
     authStore.setUser(res.data.user);
     imagePreview.value = withCacheBust(normalizeProfileImageUrl(res.data.user?.profile_picture));
+    toast.add({
+      severity: 'success',
+      summary: 'Profile image updated',
+      detail: 'Your profile picture has been uploaded.',
+      life: 2500,
+    });
   } catch (err) {
     if (err.response?.status === 422) {
       const normalizedErrors = normalizeProfileValidation(err.response?.data?.msg);
-      imageError.value = normalizedErrors.profile_picture || 'Invalid image selected.';
+      toast.add({
+        severity: 'warn',
+        summary: 'Invalid image',
+        detail: normalizedErrors.profile_picture || 'Invalid image selected.',
+        life: 3200,
+      });
     } else {
-      imageError.value = err.response?.data?.msg || 'Failed to upload image.';
+      toast.add({
+        severity: 'error',
+        summary: 'Upload failed',
+        detail: err.response?.data?.msg || 'Failed to upload image.',
+        life: 3200,
+      });
     }
   } finally {
     uploadingImage.value = false;
@@ -370,15 +413,25 @@ const handleImageSelected = async (event) => {
 };
 
 const removeProfileImage = async () => {
-  imageError.value = '';
   removingImage.value = true;
 
   try {
     const res = await api.delete('/profile/picture');
     authStore.setUser(res.data.user);
     imagePreview.value = '';
+    toast.add({
+      severity: 'success',
+      summary: 'Profile image removed',
+      detail: 'Your profile picture has been removed.',
+      life: 2500,
+    });
   } catch (err) {
-    imageError.value = err.response?.data?.msg || 'Failed to remove image.';
+    toast.add({
+      severity: 'error',
+      summary: 'Remove failed',
+      detail: err.response?.data?.msg || 'Failed to remove image.',
+      life: 3200,
+    });
   } finally {
     removingImage.value = false;
   }
@@ -386,6 +439,12 @@ const removeProfileImage = async () => {
 
 onMounted(async () => {
   if (!authStore.token) {
+    toast.add({
+      severity: 'info',
+      summary: 'Session expired',
+      detail: 'Token expired. Please log in again.',
+      life: 2500,
+    });
     router.push({ name: 'Login' });
     return;
   }

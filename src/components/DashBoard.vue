@@ -211,7 +211,7 @@ const fetchDashboard = async () => {
     router.push({ name: 'Login' });
     toast.add({
       severity: 'info',
-      summary: 'Info',
+      summary: 'Session expired',
       detail: 'Token expired. Please log in again.',
       life: 2500,
     });
