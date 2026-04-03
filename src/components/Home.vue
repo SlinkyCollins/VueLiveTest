@@ -45,7 +45,7 @@
 
         <Button
           type="button"
-          class="btn-secondary-outline w-full"
+          class="btn-secondary w-full"
           label="Create account"
           @click="router.push({ name: 'signup' })"
         />

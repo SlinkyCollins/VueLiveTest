@@ -219,7 +219,7 @@ const allowAccountTypeEdit = false;
 const user = computed(() => authStore.user);
 
 const fallbackAvatar = computed(() => {
-  return `https://ui-avatars.com/api/?name=${user.value?.name || "User"}&background=E5E7EB&color=374151`;
+  return `https://ui-avatars.com/api/?name=${user.value?.name || "User"}&background=random`;
 });
 
 const formattedCreatedAt = computed(() => {

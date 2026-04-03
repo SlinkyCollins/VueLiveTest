@@ -28,6 +28,12 @@
         </div>
       </div>
 
+      <div v-else-if="hadLoadError" class="empty-state min-h-64">
+        <span class="pi pi-exclamation-circle text-2xl text-red-600" />
+        <p>{{ loadErrorMessage }}</p>
+        <button class="btn-primary" @click="fetchTransactions(currentPage)">Retry</button>
+      </div>
+
       <div v-else-if="transactions.length === 0" class="empty-state min-h-64">
         <span class="pi pi-receipt text-2xl text-surface-400" />
         <p>No transactions yet.</p>
@@ -194,6 +200,7 @@ const toast = useToast();
 const transactions = ref([]);
 const loading = ref(true);
 const hadLoadError = ref(false);
+const loadErrorMessage = ref('');
 const currentPage = ref(1);
 const lastPage = ref(1);
 
@@ -220,6 +227,7 @@ const fetchTransactions = async (page = 1) => {
     transactions.value = txList;
     currentPage.value = res.data.transactions.current_page;
     lastPage.value = res.data.transactions.last_page;
+    loadErrorMessage.value = '';
 
     if (hadLoadError.value) {
       toast.add({
@@ -242,6 +250,7 @@ const fetchTransactions = async (page = 1) => {
   } catch (err) {
     hadLoadError.value = true;
     if (err.code === 'ERR_NETWORK') {
+      loadErrorMessage.value = 'Unable to connect to the server.';
       toast.add({
         severity: 'warn',
         summary: 'Connection issue',
@@ -249,6 +258,7 @@ const fetchTransactions = async (page = 1) => {
         life: 3000,
       });
     } else {
+      loadErrorMessage.value = 'Failed to load transactions.';
       toast.add({
         severity: 'error',
         summary: 'Load failed',

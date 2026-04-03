@@ -55,7 +55,7 @@ const imageFailed = ref(false);
 
 const fallbackAvatar = computed(() => {
   const name = props.user?.name || 'User';
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=E5E7EB&color=374151`;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
 });
 
 const avatarUrl = computed(() => {
