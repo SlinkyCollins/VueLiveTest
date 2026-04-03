@@ -1,15 +1,6 @@
-<script setup>
-</script>
-
 <template>
-  <div>
-    <header>
-    </header>
-
-    <main>
-      <RouterView />
-    </main>
-  </div>
+  <main class="min-h-screen">
+    <RouterView />
+    <Toast position="top-right" />
+  </main>
 </template>
-
-<style></style>

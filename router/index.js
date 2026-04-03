@@ -5,6 +5,7 @@ import TransactionHistory from "@/components/TransactionHistory.vue";
 import Beneficiaries from "@/components/Beneficiaries.vue";
 import SetPin from "@/components/SetPin.vue";
 import ChangePin from "@/components/ChangePin.vue";
+import ChangePassword from "@/components/ChangePassword.vue";
 import Home from "@/components/Home.vue";
 import LogIn from "@/components/LogIn.vue";
 import SignUp from "@/components/SignUp.vue";
@@ -71,6 +72,11 @@ const routes = [
         component: ChangePin,
       },
       {
+        path: "change-password",
+        name: "ChangePassword",
+        component: ChangePassword,
+      },
+      {
         path: "withdraw",
         name: "Withdraw",
         component: Withdraw,
@@ -110,16 +116,6 @@ router.beforeEach(async (to) => {
         authStore.clearAuth();
         return true;
       }
-
-      // Deterministic fallback for transient errors: route to Home with retry hint.
-      return {
-        name: "home",
-        query: {
-          authRetry: "1",
-          retryFrom: String(to.name || "auth"),
-        },
-        replace: true,
-      };
     }
   }
 
@@ -136,16 +132,6 @@ router.beforeEach(async (to) => {
         authStore.clearAuth();
         return { name: "Login" };
       }
-
-      // Deterministic fallback for transient errors on protected routes.
-      return {
-        name: "home",
-        query: {
-          authRetry: "1",
-          retryFrom: String(to.name || "protected"),
-        },
-        replace: true,
-      };
     }
   }
 
