@@ -1,17 +1,11 @@
 <template>
   <PageWrapper>
     <div class="page-stack">
-      <SectionHeader
-        title="Dashboard"
+      <SectionHeader title="Dashboard"
         :subtitle="user ? `Welcome back, ${user.name}. Here's your latest account overview.` : 'Review your account summary and next actions.'"
-        eyebrow="Vaultly"
-      >
+        eyebrow="Vaultly">
         <template #actions>
-          <button
-            class="btn-danger"
-            :disabled="loggingOut"
-            @click="handleLogout"
-          >
+          <button class="btn-danger" :disabled="loggingOut" @click="handleLogout">
             <span class="pi pi-sign-out text-sm" />
             {{ loggingOut ? 'Logging out...' : 'Logout' }}
           </button>
@@ -37,31 +31,22 @@
 
       <div v-else-if="user" class="page-stack">
         <div class="stats-grid">
-          <StatCard
-            label="Available balance"
-            :value="formatCurrency(user.balance)"
-            meta="Available for transfers and withdrawals"
-          >
+          <StatCard label="Available balance" :value="formatCurrency(user.balance)"
+            meta="Available for transfers and withdrawals">
             <template #icon>
               <span class="pi pi-wallet text-lg" />
             </template>
           </StatCard>
 
-          <StatCard
-            label="Account number"
-            :value="user.account_number"
-            :meta="`Account type: ${formatAccountType(user.account_type)}`"
-          >
+          <StatCard label="Account number" :value="user.account_number"
+            :meta="`Account type: ${formatAccountType(user.account_type)}`">
             <template #icon>
               <span class="pi pi-credit-card text-lg" />
             </template>
           </StatCard>
 
-          <StatCard
-            label="Security"
-            :value="user.has_pin ? 'PIN active' : 'PIN required'"
-            :meta="user.has_pin ? 'Transfers are protected with your transaction PIN.' : 'Set a transaction PIN before sending money.'"
-          >
+          <StatCard label="Security" :value="user.has_pin ? 'PIN active' : 'PIN required'"
+            :meta="user.has_pin ? 'Transfers are protected with your transaction PIN.' : 'Set a transaction PIN before sending money.'">
             <template #icon>
               <span class="pi pi-shield text-lg" />
             </template>
@@ -77,45 +62,33 @@
           </div>
 
           <div class="action-grid">
-            <button
-              class="btn-primary justify-start"
-              @click="router.push({ name: 'Deposit', params: { userId: String(user.id) } })"
-            >
+            <button class="btn-primary justify-start"
+              @click="router.push({ name: 'Deposit', params: { userId: String(user.id) } })">
               <span class="pi pi-plus-circle text-sm" />
               Add money
             </button>
-            <button
-              class="btn-secondary justify-start"
-              @click="router.push({ name: 'Transfer', params: { userId: String(user.id) } })"
-            >
+            <button class="btn-secondary justify-start"
+              @click="router.push({ name: 'Transfer', params: { userId: String(user.id) } })">
               <span class="pi pi-arrow-right-arrow-left text-sm" />
               Transfer
             </button>
-            <button
-              class="btn-secondary justify-start"
-              @click="router.push({ name: 'Beneficiaries', params: { userId: String(user.id) } })"
-            >
+            <button class="btn-secondary justify-start"
+              @click="router.push({ name: 'Beneficiaries', params: { userId: String(user.id) } })">
               <span class="pi pi-users text-sm" />
               Beneficiaries
             </button>
-            <button
-              class="btn-secondary justify-start"
-              @click="router.push({ name: 'TransactionHistory', params: { userId: String(user.id) } })"
-            >
+            <button class="btn-secondary justify-start"
+              @click="router.push({ name: 'TransactionHistory', params: { userId: String(user.id) } })">
               <span class="pi pi-history text-sm" />
               History
             </button>
-            <button
-              class="btn-secondary justify-start"
-              @click="router.push({ name: 'Withdraw', params: { userId: String(user.id) } })"
-            >
+            <button class="btn-secondary justify-start"
+              @click="router.push({ name: 'Withdraw', params: { userId: String(user.id) } })">
               <span class="pi pi-arrow-circle-up text-sm" />
               Withdraw
             </button>
-            <button
-              class="btn-secondary justify-start"
-              @click="router.push({ name: 'Profile', params: { userId: String(user.id) } })"
-            >
+            <button class="btn-secondary justify-start"
+              @click="router.push({ name: 'Profile', params: { userId: String(user.id) } })">
               <span class="pi pi-user text-sm" />
               Profile
             </button>
@@ -131,32 +104,20 @@
               </p>
             </div>
 
-            <button
-              v-if="!user.has_pin"
-              class="btn-primary"
-              @click="router.push({ name: 'SetPin', params: { userId: String(user.id) } })"
-            >
+            <button v-if="!user.has_pin" class="btn-primary"
+              @click="router.push({ name: 'SetPin', params: { userId: String(user.id) } })">
               Set transaction PIN
             </button>
-            <button
-              v-else
-              class="btn-secondary"
-              @click="router.push({ name: 'ChangePin', params: { userId: String(user.id) } })"
-            >
+            <button v-else class="btn-secondary"
+              @click="router.push({ name: 'ChangePin', params: { userId: String(user.id) } })">
               Change PIN
             </button>
           </div>
 
-          <div
-            v-if="!user.has_pin"
-            class="alert-warning"
-          >
+          <div v-if="!user.has_pin" class="alert-warning">
             You must set a transaction PIN before making transfers.
           </div>
-          <div
-            v-else
-            class="alert-info"
-          >
+          <div v-else class="alert-info">
             Your transaction PIN is active and ready for secure transfers.
           </div>
         </section>
@@ -233,6 +194,12 @@ const handleLogout = async () => {
     authStore.clearAuth();
     loggingOut.value = false;
     router.push({ name: 'Login' });
+    toast.add({
+      severity: 'success',
+      summary: 'Logged out',
+      detail: 'You have been logged out successfully.',
+      life: 2500,
+    });
   }
 };
 
@@ -242,6 +209,12 @@ const fetchDashboard = async () => {
 
   if (!authStore.token) {
     router.push({ name: 'Login' });
+    toast.add({
+      severity: 'info',
+      summary: 'Info',
+      detail: 'Token expired. Please log in again.',
+      life: 2500,
+    });
     return;
   }
 
