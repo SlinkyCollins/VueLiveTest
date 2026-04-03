@@ -212,18 +212,7 @@ const goToSettings = () => {
     return;
   }
 
-  router.push({
-    name: 'Profile',
-    params: { userId: String(user.value.id) },
-    query: { section: 'settings' },
-  });
-
-  toast.add({
-    severity: 'info',
-    summary: 'Settings',
-    detail: 'Account settings are available in your profile page.',
-    life: 2200,
-  });
+  router.push({ name: 'ChangePassword', params: { userId: String(user.value.id) } });
 };
 
 const performLogout = async () => {
