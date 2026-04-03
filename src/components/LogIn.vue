@@ -61,6 +61,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from "vue-router";
+import { useToast } from 'primevue/usetoast';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import PageWrapper from '@/components/ui/PageWrapper.vue';
@@ -78,8 +79,26 @@ const successMessage = ref("");
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const toast = useToast();
 
 onMounted(() => {
+  if (route.query.sessionExpired === '1') {
+    toast.add({
+      severity: 'error',
+      summary: 'Unauthorized',
+      detail: 'Your session has expired. Please log in again.',
+      life: 4000,
+    });
+
+    const nextQuery = { ...route.query };
+    delete nextQuery.sessionExpired;
+
+    router.replace({
+      name: 'Login',
+      query: nextQuery,
+    });
+  }
+
   if (route.query.signupSuccess === '1') {
     successMessage.value = 'Signup successful. Please log in.';
 
