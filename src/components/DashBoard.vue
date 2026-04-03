@@ -3,14 +3,7 @@
     <div class="page-stack">
       <SectionHeader title="Dashboard"
         :subtitle="user ? `Welcome back, ${user.name}. Here's your latest account overview.` : 'Review your account summary and next actions.'"
-        eyebrow="Vaultly">
-        <template #actions>
-          <button class="btn-danger" :disabled="loggingOut" @click="handleLogout">
-            <span class="pi pi-sign-out text-sm" />
-            {{ loggingOut ? 'Logging out...' : 'Logout' }}
-          </button>
-        </template>
-      </SectionHeader>
+        eyebrow="Vaultly" />
 
       <div v-if="loading" class="empty-state min-h-72">
         <div class="w-full max-w-4xl space-y-4 pt-2">
@@ -149,7 +142,23 @@
             </div>
           </div>
         </section>
+
+        <section class="content-card section-stack">
+          <div class="flex items-center justify-between gap-3">
+            <div class="space-y-1">
+              <h2 class="section-title">Session</h2>
+              <p class="section-subtitle">Sign out securely when you are done.</p>
+            </div>
+
+            <button class="btn-danger" :disabled="loggingOut" @click="requestLogout">
+              <span class="pi pi-sign-out text-sm" />
+              {{ loggingOut ? 'Logging out...' : 'Logout' }}
+            </button>
+          </div>
+        </section>
       </div>
+
+      <ConfirmDialog />
     </div>
   </PageWrapper>
 </template>
@@ -158,6 +167,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
 import Skeleton from 'primevue/skeleton';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
@@ -172,6 +182,7 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 const toast = useToast();
+const confirm = useConfirm();
 
 const user = computed(() => authStore.user);
 
@@ -183,7 +194,7 @@ const formatAccountType = (value) => {
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
-const handleLogout = async () => {
+const performLogout = async () => {
   loggingOut.value = true;
 
   try {
@@ -201,6 +212,20 @@ const handleLogout = async () => {
       life: 2500,
     });
   }
+};
+
+const requestLogout = () => {
+  confirm.require({
+    header: 'Confirm logout',
+    message: 'Are you sure you want to log out?',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Logout',
+    rejectLabel: 'Cancel',
+    acceptClass: 'p-button-danger',
+    accept: () => {
+      performLogout();
+    },
+  });
 };
 
 const fetchDashboard = async () => {
