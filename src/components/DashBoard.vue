@@ -19,8 +19,6 @@
       </SectionHeader>
 
       <div v-if="loading" class="empty-state min-h-72">
-        <span class="pi pi-spin pi-spinner text-2xl text-brand-600" />
-        <p>Loading dashboard...</p>
         <div class="w-full max-w-4xl space-y-4 pt-2">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Skeleton height="8.5rem" borderRadius="1rem" />
@@ -52,7 +50,7 @@
           <StatCard
             label="Account number"
             :value="user.account_number"
-            :meta="`Account type: ${user.account_type}`"
+            :meta="`Account type: ${formatAccountType(user.account_type)}`"
           >
             <template #icon>
               <span class="pi pi-credit-card text-lg" />
@@ -218,6 +216,11 @@ const user = computed(() => authStore.user);
 
 const formatCurrency = (value) => `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
 const formatDate = (value) => new Date(value).toLocaleDateString();
+const formatAccountType = (value) => {
+  if (!value) return '';
+  const normalized = String(value);
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
 
 const handleLogout = async () => {
   loggingOut.value = true;

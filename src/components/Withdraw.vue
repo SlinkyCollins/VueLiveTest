@@ -1,82 +1,97 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
-      <button
-        @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
-        class="text-blue-600 text-sm font-medium hover:underline mb-4 inline-block"
-      >&larr; Back to Dashboard</button>
+  <PageWrapper narrow>
+    <div class="page-stack">
+      <SectionHeader
+        title="Withdraw"
+        subtitle="Withdraw money from your Vaultly balance with a secure, PIN-protected flow."
+        eyebrow="Cash out"
+      >
+        <template #actions>
+          <button
+            class="btn-secondary"
+            @click="router.push({ name: 'Dashboard', params: { userId: String(route.params.userId) } })"
+          >
+            <span class="pi pi-arrow-left text-sm" />
+            Back to dashboard
+          </button>
+        </template>
+      </SectionHeader>
 
-      <h2 class="text-2xl font-bold text-center mb-6 text-red-600">Withdraw Cash</h2>
+      <FormCard
+        title="Withdraw money"
+        subtitle="Enter your withdrawal amount and confirm with your transaction PIN."
+      >
+        <form @submit.prevent="handleWithdraw" class="form-stack">
+          <div class="surface-muted text-center">
+            <p class="stat-label">Current balance</p>
+            <p class="mt-2 text-3xl font-semibold tracking-tight text-brand-700">
+              {{ formatCurrency(authStore.user?.balance) }}
+            </p>
+          </div>
 
-      <form @submit.prevent="handleWithdraw" class="space-y-4">
-        <div class="bg-gray-50 rounded-lg p-4 text-center">
-          <p class="text-sm text-gray-500">Current Balance</p>
-          <p class="text-2xl font-bold text-blue-600">
-            ₦{{ authStore.user ? Number(authStore.user.balance).toLocaleString('en-NG', { minimumFractionDigits: 2 }) : '0.00' }}
-          </p>
-        </div>
+          <div>
+            <label class="field-label">Amount (₦)</label>
+            <InputText
+              v-model="amount"
+              type="number"
+              min="100"
+              step="0.01"
+              placeholder="Enter amount (min ₦100)"
+              :class="{ 'p-invalid': errors.amount }"
+              @input="clearErrors"
+            />
+            <p v-if="errors.amount" class="field-error">{{ errors.amount }}</p>
+          </div>
 
-        <div>
-          <label class="block text-gray-700 font-medium">Amount (₦)</label>
-          <input
-            v-model="amount"
-            @input="clearErrors"
-            type="number"
-            min="100"
-            step="0.01"
-            placeholder="Enter amount (min ₦100)"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            :class="{ 'border-red-500': errors.amount }"
+          <div>
+            <label class="field-label">Transaction PIN</label>
+            <Password
+              v-model="pin"
+              placeholder="Enter 4-digit PIN"
+              :feedback="false"
+              toggleMask
+              fluid
+              :inputClass="errors.pin ? 'w-full p-invalid' : 'w-full'"
+              :maxlength="4"
+              @input="handlePinInput"
+            />
+            <p v-if="errors.pin" class="field-error">{{ errors.pin }}</p>
+          </div>
+
+          <Button
+            type="submit"
+            class="btn-primary w-full"
+            :disabled="loading"
+            :label="loading ? 'Processing...' : 'Withdraw'"
           />
-          <p v-if="errors.amount" class="text-red-500 text-sm mt-1">{{ errors.amount }}</p>
-        </div>
-
-        <div>
-          <label class="block text-gray-700 font-medium">Transaction PIN</label>
-          <input
-            v-model="pin"
-            @input="handlePinInput"
-            type="password"
-            inputmode="numeric"
-            maxlength="4"
-            placeholder="Enter 4-digit PIN"
-            class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            :class="{ 'border-red-500': errors.pin }"
-          />
-          <p v-if="errors.pin" class="text-red-500 text-sm mt-1">{{ errors.pin }}</p>
-        </div>
-
-        <button
-          type="submit"
-          class="w-full py-2 px-4 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="loading"
-        >{{ loading ? 'Processing...' : 'Withdraw' }}</button>
-
-        <p v-if="successMessage" class="text-green-600 text-center text-sm mt-3">{{ successMessage }}</p>
-        <p v-if="errorMessage" class="text-red-600 text-center text-sm mt-3">{{ errorMessage }}</p>
-      </form>
+        </form>
+      </FormCard>
     </div>
-  </div>
+  </PageWrapper>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useToast } from 'primevue/usetoast';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import { useInputNormalization } from '@/composables/useInputNormalization';
+import PageWrapper from '@/components/ui/PageWrapper.vue';
+import SectionHeader from '@/components/ui/SectionHeader.vue';
+import FormCard from '@/components/ui/FormCard.vue';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 const { normalizeRefDigits } = useInputNormalization();
+const toast = useToast();
 
 const amount = ref('');
 const pin = ref('');
 const loading = ref(false);
 const errors = ref({});
-const errorMessage = ref('');
-const successMessage = ref('');
+const formatCurrency = (value) => `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
 
 onMounted(async () => {
   if (!authStore.user) {
@@ -87,7 +102,12 @@ onMounted(async () => {
         router.push({ name: 'Login' });
         return;
       }
-      errorMessage.value = 'Unable to load your account details. Please try again.';
+      toast.add({
+        severity: 'error',
+        summary: 'Unable to load account',
+        detail: 'Unable to load your account details. Please try again.',
+        life: 3000,
+      });
       return;
     }
   }
@@ -99,13 +119,17 @@ onMounted(async () => {
       router.push({ name: 'Login' });
       return;
     }
-    errorMessage.value = 'Unable to refresh your balance right now.';
+    toast.add({
+      severity: 'error',
+      summary: 'Balance refresh failed',
+      detail: 'Unable to refresh your balance right now.',
+      life: 3000,
+    });
   }
 });
 
 const clearErrors = () => {
   errors.value = {};
-  errorMessage.value = '';
 };
 
 const handlePinInput = () => {
@@ -138,9 +162,6 @@ const validate = () => {
 };
 
 const handleWithdraw = async () => {
-  errorMessage.value = '';
-  successMessage.value = '';
-
   if (!validate()) return;
 
   loading.value = true;
@@ -152,7 +173,12 @@ const handleWithdraw = async () => {
     });
 
     if (res.data.status === '200') {
-      successMessage.value = res.data.msg;
+      toast.add({
+        severity: 'success',
+        summary: 'Withdrawal successful',
+        detail: res.data.msg,
+        life: 2500,
+      });
       authStore.updateBalance(res.data.new_balance);
       amount.value = '';
       pin.value = '';
@@ -161,13 +187,28 @@ const handleWithdraw = async () => {
       if (serverErrors.amount) errors.value.amount = serverErrors.amount[0];
       if (serverErrors.pin) errors.value.pin = serverErrors.pin[0];
     } else {
-      errorMessage.value = res.data.msg || 'Something went wrong. Please try again.';
+      toast.add({
+        severity: 'error',
+        summary: 'Withdrawal failed',
+        detail: res.data.msg || 'Something went wrong. Please try again.',
+        life: 3000,
+      });
     }
   } catch (err) {
     if (err.code === 'ERR_NETWORK') {
-      errorMessage.value = 'Unable to connect to the server.';
+      toast.add({
+        severity: 'error',
+        summary: 'Network error',
+        detail: 'Unable to connect to the server.',
+        life: 3000,
+      });
     } else {
-      errorMessage.value = err?.response?.data?.msg || 'Withdrawal failed. Please try again.';
+      toast.add({
+        severity: 'error',
+        summary: 'Withdrawal failed',
+        detail: err?.response?.data?.msg || 'Withdrawal failed. Please try again.',
+        life: 3000,
+      });
     }
   } finally {
     loading.value = false;

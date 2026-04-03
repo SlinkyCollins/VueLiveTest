@@ -43,9 +43,6 @@
             <p v-if="errors.amount" class="field-error">{{ errors.amount }}</p>
           </div>
 
-          <div v-if="successMessage" class="alert-success">{{ successMessage }}</div>
-          <div v-if="errorMessage" class="alert-error">{{ errorMessage }}</div>
-
           <Button
             type="submit"
             class="btn-primary w-full"
@@ -61,6 +58,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useToast } from 'primevue/usetoast';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import PageWrapper from '@/components/ui/PageWrapper.vue';
@@ -70,12 +68,11 @@ import FormCard from '@/components/ui/FormCard.vue';
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const toast = useToast();
 
 const amount = ref('');
 const loading = ref(false);
 const errors = ref({});
-const errorMessage = ref('');
-const successMessage = ref('');
 const formatCurrency = (value) => `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
 
 onMounted(async () => {
@@ -90,7 +87,12 @@ onMounted(async () => {
       }
 
       // Keep user on page for transient/server errors
-      errorMessage.value = 'Unable to load your account details. Please try again.';
+      toast.add({
+        severity: 'error',
+        summary: 'Unable to load account',
+        detail: 'Unable to load your account details. Please try again.',
+        life: 3000,
+      });
       return;
     }
   }
@@ -103,13 +105,17 @@ onMounted(async () => {
       router.push({ name: 'Login' });
       return;
     }
-    errorMessage.value = 'Unable to refresh your balance right now.';
+    toast.add({
+      severity: 'error',
+      summary: 'Balance refresh failed',
+      detail: 'Unable to refresh your balance right now.',
+      life: 3000,
+    });
   }
 });
 
 const clearErrors = () => {
   errors.value = {};
-  errorMessage.value = '';
 };
 
 const validate = () => {
@@ -131,9 +137,6 @@ const validate = () => {
 };
 
 const handleDeposit = async () => {
-  errorMessage.value = '';
-  successMessage.value = '';
-
   if (!validate()) return;
 
   loading.value = true;
@@ -144,20 +147,40 @@ const handleDeposit = async () => {
     });
 
     if (res.data.status === '200') {
-      successMessage.value = res.data.msg;
+      toast.add({
+        severity: 'success',
+        summary: 'Deposit successful',
+        detail: res.data.msg,
+        life: 2500,
+      });
       authStore.updateBalance(res.data.new_balance);
       amount.value = '';
     } else if (res.data.status === '422') {
       const serverErrors = res.data.msg;
       if (serverErrors.amount) errors.value.amount = serverErrors.amount[0];
     } else {
-      errorMessage.value = 'Something went wrong. Please try again.';
+      toast.add({
+        severity: 'error',
+        summary: 'Deposit failed',
+        detail: 'Something went wrong. Please try again.',
+        life: 3000,
+      });
     }
   } catch (err) {
     if (err.code === 'ERR_NETWORK') {
-      errorMessage.value = 'Unable to connect to the server.';
+      toast.add({
+        severity: 'error',
+        summary: 'Network error',
+        detail: 'Unable to connect to the server.',
+        life: 3000,
+      });
     } else {
-      errorMessage.value = 'Deposit failed. Please try again.';
+      toast.add({
+        severity: 'error',
+        summary: 'Deposit failed',
+        detail: 'Deposit failed. Please try again.',
+        life: 3000,
+      });
     }
   } finally {
     loading.value = false;
