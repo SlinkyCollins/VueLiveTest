@@ -107,14 +107,21 @@
               </p>
             </div>
 
-            <button v-if="!user.has_pin" class="btn-primary"
-              @click="router.push({ name: 'SetPin', params: { userId: String(user.id) } })">
-              Set transaction PIN
-            </button>
-            <button v-else class="btn-secondary"
-              @click="router.push({ name: 'ChangePin', params: { userId: String(user.id) } })">
-              Change PIN
-            </button>
+            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              <button v-if="!user.has_pin" class="btn-primary"
+                @click="router.push({ name: 'SetPin', params: { userId: String(user.id) } })">
+                Set transaction PIN
+              </button>
+              <button v-else class="btn-secondary"
+                @click="router.push({ name: 'ChangePin', params: { userId: String(user.id) } })">
+                Change PIN
+              </button>
+
+              <button class="btn-secondary"
+                @click="router.push({ name: 'ChangePassword', params: { userId: String(user.id) } })">
+                Change password
+              </button>
+            </div>
           </div>
 
           <div v-if="!user.has_pin" class="alert-warning">

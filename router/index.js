@@ -5,6 +5,7 @@ import TransactionHistory from "@/components/TransactionHistory.vue";
 import Beneficiaries from "@/components/Beneficiaries.vue";
 import SetPin from "@/components/SetPin.vue";
 import ChangePin from "@/components/ChangePin.vue";
+import ChangePassword from "@/components/ChangePassword.vue";
 import Home from "@/components/Home.vue";
 import LogIn from "@/components/LogIn.vue";
 import SignUp from "@/components/SignUp.vue";
@@ -69,6 +70,11 @@ const routes = [
         path: "change-pin",
         name: "ChangePin",
         component: ChangePin,
+      },
+      {
+        path: "change-password",
+        name: "ChangePassword",
+        component: ChangePassword,
       },
       {
         path: "withdraw",
