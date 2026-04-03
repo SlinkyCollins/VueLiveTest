@@ -1,35 +1,63 @@
 <template>
-  <div class="min-h-screen flex justify-center items-center bg-gray-50 p-6">
-    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
-      <h1 class="text-2xl font-bold text-center mb-3 text-blue-600">Vaultly</h1>
-      <p class="text-gray-600 text-center text-sm mb-6">
-        A simple way to manage your money.
-        Deposit, transfer, and track your transactions in one place.
-      </p>
+  <PageWrapper auth>
+    <FormCard
+    >
+      <div class="mb-6 space-y-3">
+        <span class="badge-primary">Vaultly</span>
+        <p class="section-subtitle">
+          Move money, review balances, and track transactions without a noisy interface or inconsistent flows.
+        </p>
+      </div>
+
+      <div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div class="surface-muted text-left space-y-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
+            <i class="pi pi-plus-circle text-sm"></i>
+          </span>
+          <p class="text-sm font-semibold text-surface-900">Deposits</p>
+          <p class="text-sm leading-6 text-surface-600">Fund your account in a few steps.</p>
+        </div>
+
+        <div class="surface-muted text-left space-y-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
+            <i class="pi pi-arrow-right-arrow-left text-sm"></i>
+          </span>
+          <p class="text-sm font-semibold text-surface-900">Transfers</p>
+          <p class="text-sm leading-6 text-surface-600">Send money with PIN protection.</p>
+        </div>
+
+        <div class="surface-muted text-left space-y-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
+            <i class="pi pi-history text-sm"></i>
+          </span>
+          <p class="text-sm font-semibold text-surface-900">History</p>
+          <p class="text-sm leading-6 text-surface-600">Review account activity clearly.</p>
+        </div>
+      </div>
 
       <div class="space-y-3">
-        <button
+        <Button
           type="button"
-          class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+          class="btn-primary w-full"
+          label="Log in"
           @click="router.push({ name: 'Login' })"
-        >
-          Login
-        </button>
+        />
 
-        <button
+        <Button
           type="button"
-          class="w-full py-2 px-4 bg-white border border-blue-600 text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition"
+          class="btn-secondary-outline w-full"
+          label="Create account"
           @click="router.push({ name: 'signup' })"
-        >
-          Create Account
-        </button>
+        />
       </div>
-    </div>
-  </div>
+    </FormCard>
+  </PageWrapper>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router';
+import PageWrapper from '@/components/ui/PageWrapper.vue';
+import FormCard from '@/components/ui/FormCard.vue';
 
 const router = useRouter();
 </script>

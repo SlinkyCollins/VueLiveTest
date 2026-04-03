@@ -4,13 +4,6 @@
       title="Welcome back"
       subtitle="Sign in to review balances, move money, and manage your account."
     >
-      <div class="mb-6 space-y-3">
-        <span class="badge-primary">Vaultly</span>
-        <p class="section-subtitle">
-          Simple everyday banking with a clean, reliable workflow.
-        </p>
-      </div>
-
       <form @submit.prevent="handleLogin" class="form-stack">
         <div>
           <label for="email" class="field-label">Email address</label>

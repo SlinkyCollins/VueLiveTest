@@ -4,13 +4,6 @@
       title="Create your account"
       subtitle="Open your Vaultly account and get started with simple everyday banking."
     >
-      <div class="mb-6 space-y-3">
-        <span class="badge-primary">Vaultly</span>
-        <p class="section-subtitle">
-          Set up your profile details once, then continue straight into your account.
-        </p>
-      </div>
-
       <form @submit.prevent="submitForm" class="form-stack">
         <div>
           <label class="field-label">Full name</label>
@@ -51,7 +44,9 @@
           <label class="field-label">Account type</label>
           <Select
             v-model="form.accountType"
-            :options="accountTypes"
+            :options="accountTypeOptions"
+            optionLabel="label"
+            optionValue="value"
             placeholder="Select account type"
             :class="{ 'p-invalid': errors.accountType }"
           />
@@ -98,6 +93,11 @@ const form = ref({
 });
 
 const accountTypes = ["savings", "current", "fixed"];
+
+const accountTypeOptions = accountTypes.map((type) => ({
+  label: type.charAt(0).toUpperCase() + type.slice(1),
+  value: type,
+}));
 
 const errors = ref({});
 const loading = ref(false);
