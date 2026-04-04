@@ -377,9 +377,7 @@ const handleImageSelected = async (event) => {
   uploadingImage.value = true;
 
   try {
-    const res = await api.post('/profile/picture', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const res = await api.post('/profile/picture', formData);
 
     authStore.setUser(res.data.user);
     imagePreview.value = withCacheBust(normalizeProfileImageUrl(res.data.user?.profile_picture));
