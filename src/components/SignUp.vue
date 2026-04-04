@@ -125,12 +125,6 @@ const submitForm = async () => {
     });
 
     if (res.data.status === "200") {
-      toast.add({
-        severity: 'success',
-        summary: 'Signup successful',
-        detail: 'Your account has been created.',
-        life: 2200,
-      });
       router.push({
         name: "Login",
         query: { signupSuccess: "1" },

@@ -254,6 +254,10 @@
     @apply border-0 bg-brand-600 text-white hover:bg-brand-700;
   }
 
+  .p-button.btn-danger {
+    @apply border-0 bg-red-600 text-white hover:bg-red-700;
+  }
+
   .badge {
     @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium;
   }

@@ -179,7 +179,7 @@
           />
           <Button
             type="button"
-            class="btn-danger"
+            severity="danger"
             :disabled="loggingOut"
             :loading="loggingOut"
             :label="loggingOut ? 'Logging out...' : 'Logout'"

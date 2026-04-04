@@ -147,13 +147,6 @@ const handleLogin = async () => {
     });
 
     if (res.data.status === "200") {
-      toast.add({
-        severity: 'success',
-        summary: 'Welcome back',
-        detail: res.data.msg || 'Login successful.',
-        life: 2200,
-      });
-
       // Store token and user in Pinia
       authStore.setAuth(res.data.access_token, res.data.user);
 
