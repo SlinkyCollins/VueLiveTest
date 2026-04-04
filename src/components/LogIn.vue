@@ -42,9 +42,6 @@
             :disabled="loading"
             :label="loading ? 'Logging in...' : 'Log in'"
           />
-
-          <div v-if="errorMessage" class="alert-error">{{ errorMessage }}</div>
-          <div v-if="successMessage" class="alert-success">{{ successMessage }}</div>
         </div>
       </form>
 
@@ -74,8 +71,6 @@ const form = ref({
 });
 const loading = ref(false);
 const errors = ref({});
-const errorMessage = ref("");
-const successMessage = ref("");
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
@@ -100,7 +95,12 @@ onMounted(() => {
   }
 
   if (route.query.signupSuccess === '1') {
-    successMessage.value = 'Signup successful. Please log in.';
+    toast.add({
+      severity: 'success',
+      summary: 'Signup successful',
+      detail: 'Please log in.',
+      life: 2600,
+    });
 
     const nextQuery = { ...route.query };
     delete nextQuery.signupSuccess;
@@ -116,7 +116,6 @@ const clearFieldError = (field) => {
   if (errors.value[field]) {
     delete errors.value[field];
   }
-  errorMessage.value = "";
 };
 
 const validate = () => {
@@ -137,9 +136,6 @@ const validate = () => {
 };
 
 const handleLogin = async () => {
-  errorMessage.value = "";
-  successMessage.value = "";
-
   if (!validate()) return;
 
   loading.value = true;
@@ -151,7 +147,12 @@ const handleLogin = async () => {
     });
 
     if (res.data.status === "200") {
-      successMessage.value = res.data.msg;
+      toast.add({
+        severity: 'success',
+        summary: 'Welcome back',
+        detail: res.data.msg || 'Login successful.',
+        life: 2200,
+      });
 
       // Store token and user in Pinia
       authStore.setAuth(res.data.access_token, res.data.user);
@@ -162,22 +163,53 @@ const handleLogin = async () => {
         query: { loginSuccess: '1' },
       });
     } else if (res.data.status === "401") {
-      errorMessage.value = res.data.msg;
+      toast.add({
+        severity: 'error',
+        summary: 'Login failed',
+        detail: res.data.msg || 'Invalid credentials.',
+        life: 3000,
+      });
     } else if (res.data.status === "422") {
       // Server-side validation errors
       const serverErrors = res.data.msg;
       if (serverErrors.email) errors.value.email = serverErrors.email[0];
       if (serverErrors.password) errors.value.password = serverErrors.password[0];
+      toast.add({
+        severity: 'warn',
+        summary: 'Validation required',
+        detail: 'Please fix the highlighted fields.',
+        life: 2800,
+      });
     } else {
-      errorMessage.value = "Something went wrong. Please try again.";
+      toast.add({
+        severity: 'error',
+        summary: 'Login failed',
+        detail: 'Something went wrong. Please try again.',
+        life: 3200,
+      });
     }
   } catch (err) {
     if (err.code === "ERR_NETWORK") {
-      errorMessage.value = "Unable to connect to the server. Please check your internet connection.";
+      toast.add({
+        severity: 'error',
+        summary: 'Connection issue',
+        detail: 'Unable to connect to the server. Please check your internet connection.',
+        life: 3200,
+      });
     } else if (err.code === "ECONNABORTED") {
-      errorMessage.value = "Request timed out. Please try again.";
+      toast.add({
+        severity: 'warn',
+        summary: 'Request timed out',
+        detail: 'Please try again.',
+        life: 3000,
+      });
     } else {
-      errorMessage.value = "Something went wrong. Please try again.";
+      toast.add({
+        severity: 'error',
+        summary: 'Login failed',
+        detail: 'Something went wrong. Please try again.',
+        life: 3200,
+      });
     }
   } finally {
     loading.value = false;

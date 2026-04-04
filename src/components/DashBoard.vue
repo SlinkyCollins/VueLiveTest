@@ -15,11 +15,6 @@
         </template>
       </SectionHeader>
 
-      <div v-if="loggingOut" class="alert-info flex items-center gap-2">
-        <span class="pi pi-spinner pi-spin" />
-        Logging out. Please wait...
-      </div>
-
       <StackedSkeleton
         v-if="loading"
         wrapperClass="empty-state min-h-72"
@@ -163,7 +158,35 @@
 
       </div>
 
-      <ConfirmDialog />
+      <Dialog
+        :visible="logoutDialogVisible"
+        @update:visible="logoutDialogVisible = $event"
+        modal
+        header="Confirm logout"
+        :closable="!loggingOut"
+        :dismissableMask="!loggingOut"
+        :style="{ width: '24rem' }"
+      >
+        <p class="text-sm text-surface-600">Are you sure you want to log out?</p>
+
+        <template #footer>
+          <Button
+            type="button"
+            class="btn-secondary"
+            :disabled="loggingOut"
+            label="Cancel"
+            @click="logoutDialogVisible = false"
+          />
+          <Button
+            type="button"
+            class="btn-danger"
+            :disabled="loggingOut"
+            :loading="loggingOut"
+            :label="loggingOut ? 'Logging out...' : 'Logout'"
+            @click="performLogout"
+          />
+        </template>
+      </Dialog>
     </div>
   </PageWrapper>
 </template>
@@ -172,7 +195,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
-import { useConfirm } from 'primevue/useconfirm';
+import Dialog from 'primevue/dialog';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import PageWrapper from '@/components/ui/PageWrapper.vue';
@@ -184,11 +207,11 @@ import StackedSkeleton from '@/components/ui/StackedSkeleton.vue';
 const loading = ref(true);
 const errorMessage = ref('');
 const loggingOut = ref(false);
+const logoutDialogVisible = ref(false);
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 const toast = useToast();
-const confirm = useConfirm();
 
 const user = computed(() => authStore.user);
 
@@ -224,6 +247,7 @@ const performLogout = async () => {
   } catch (err) {
     // Even if the API call fails, clear local data and redirect
   } finally {
+    logoutDialogVisible.value = false;
     authStore.clearAuth();
     loggingOut.value = false;
     router.push({ name: 'Login' });
@@ -237,17 +261,11 @@ const performLogout = async () => {
 };
 
 const requestLogout = () => {
-  confirm.require({
-    header: 'Confirm logout',
-    message: 'Are you sure you want to log out?',
-    icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Logout',
-    rejectLabel: 'Cancel',
-    acceptClass: 'p-button-danger',
-    accept: () => {
-      performLogout();
-    },
-  });
+  if (loggingOut.value) {
+    return;
+  }
+
+  logoutDialogVisible.value = true;
 };
 
 const fetchDashboard = async () => {
