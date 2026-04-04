@@ -17,16 +17,12 @@
         </template>
       </SectionHeader>
 
-      <div v-if="loading" class="empty-state min-h-64">
-        <div class="w-full max-w-4xl space-y-4 pt-2">
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <Skeleton height="8.5rem" borderRadius="1rem" />
-            <Skeleton height="8.5rem" borderRadius="1rem" />
-            <Skeleton height="8.5rem" borderRadius="1rem" />
-          </div>
-          <Skeleton height="10.5rem" borderRadius="1rem" />
-        </div>
-      </div>
+      <StackedSkeleton
+        v-if="loading"
+        wrapperClass="empty-state min-h-64"
+        :gridHeights="['8.5rem', '8.5rem', '8.5rem']"
+        :rows="['10.5rem']"
+      />
 
       <div v-else class="page-stack">
         <section class="content-card section-stack">
@@ -190,12 +186,12 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import Skeleton from 'primevue/skeleton';
 import { useToast } from 'primevue/usetoast';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import PageWrapper from '@/components/ui/PageWrapper.vue';
 import SectionHeader from '@/components/ui/SectionHeader.vue';
+import StackedSkeleton from '@/components/ui/StackedSkeleton.vue';
 
 const router = useRouter();
 const route = useRoute();

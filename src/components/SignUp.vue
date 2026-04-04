@@ -60,9 +60,6 @@
             :disabled="loading"
             :label="loading ? 'Signing up...' : 'Sign up'"
           />
-
-          <div v-if="successMessage" class="alert-success">{{ successMessage }}</div>
-          <div v-if="errorMessage" class="alert-error">{{ errorMessage }}</div>
         </div>
       </form>
 
@@ -79,11 +76,13 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useToast } from 'primevue/usetoast';
 import api from "@/utils/api";
 import PageWrapper from "@/components/ui/PageWrapper.vue";
 import FormCard from "@/components/ui/FormCard.vue";
 
 const router = useRouter();
+const toast = useToast();
 
 const form = ref({
   fullname: "",
@@ -101,16 +100,17 @@ const accountTypeOptions = accountTypes.map((type) => ({
 
 const errors = ref({});
 const loading = ref(false);
-const successMessage = ref("");
-const errorMessage = ref("");
 
 const submitForm = async () => {
   errors.value = {};
-  errorMessage.value = "";
-  successMessage.value = "";
 
   if (!form.value.fullname || !form.value.email || !form.value.password || !form.value.accountType) {
-    errorMessage.value = "Please fill in all fields.";
+    toast.add({
+      severity: 'warn',
+      summary: 'Missing details',
+      detail: 'Please fill in all fields.',
+      life: 2800,
+    });
     return;
   }
 
@@ -125,7 +125,12 @@ const submitForm = async () => {
     });
 
     if (res.data.status === "200") {
-      successMessage.value = "Signup successful.";
+      toast.add({
+        severity: 'success',
+        summary: 'Signup successful',
+        detail: 'Your account has been created.',
+        life: 2200,
+      });
       router.push({
         name: "Login",
         query: { signupSuccess: "1" },
@@ -133,11 +138,23 @@ const submitForm = async () => {
     } else if (res.data.status === "422") {
       errors.value = res.data.msg; // Laravel validation errors
     } else {
-      errorMessage.value = "Something went wrong.";
+      toast.add({
+        severity: 'error',
+        summary: 'Signup failed',
+        detail: res.data.msg || 'Something went wrong.',
+        life: 3200,
+      });
     }
   } catch (err) {
     console.error(err);
-    errorMessage.value = "Something went wrong. Try again.";
+    toast.add({
+      severity: 'error',
+      summary: 'Signup failed',
+      detail: err.code === 'ERR_NETWORK'
+        ? 'Unable to connect to the server.'
+        : 'Something went wrong. Try again.',
+      life: 3200,
+    });
   } finally {
     loading.value = false;
   }

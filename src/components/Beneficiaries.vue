@@ -58,14 +58,12 @@
           </button>
         </div>
 
-        <div v-if="loading" class="min-h-56">
-          <div class="w-full space-y-3 pt-1">
-            <Skeleton height="2.75rem" borderRadius="1rem" />
-            <Skeleton height="4.75rem" borderRadius="1rem" />
-            <Skeleton height="4.75rem" borderRadius="1rem" />
-            <Skeleton height="4.75rem" borderRadius="1rem" />
-          </div>
-        </div>
+        <StackedSkeleton
+          v-if="loading"
+          wrapperClass="min-h-56"
+          containerClass="w-full space-y-3 pt-1"
+          :rows="['2.75rem', '4.75rem', '4.75rem', '4.75rem']"
+        />
 
         <div v-else-if="beneficiaries.length === 0" class="empty-state min-h-56">
           <span class="pi pi-users text-2xl text-surface-400" />
@@ -169,7 +167,6 @@ import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
-import Skeleton from 'primevue/skeleton';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import { useInputNormalization } from '@/composables/useInputNormalization';
@@ -177,6 +174,7 @@ import PageWrapper from '@/components/ui/PageWrapper.vue';
 import SectionHeader from '@/components/ui/SectionHeader.vue';
 import FormCard from '@/components/ui/FormCard.vue';
 import Menu from 'primevue/menu';
+import StackedSkeleton from '@/components/ui/StackedSkeleton.vue';
 
 const router = useRouter();
 const route = useRoute();

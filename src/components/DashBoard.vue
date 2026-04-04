@@ -15,16 +15,17 @@
         </template>
       </SectionHeader>
 
-      <div v-if="loading" class="empty-state min-h-72">
-        <div class="w-full max-w-4xl space-y-4 pt-2">
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <Skeleton height="8.5rem" borderRadius="1rem" />
-            <Skeleton height="8.5rem" borderRadius="1rem" />
-            <Skeleton height="8.5rem" borderRadius="1rem" />
-          </div>
-          <Skeleton height="10.5rem" borderRadius="1rem" />
-        </div>
+      <div v-if="loggingOut" class="alert-info flex items-center gap-2">
+        <span class="pi pi-spinner pi-spin" />
+        Logging out. Please wait...
       </div>
+
+      <StackedSkeleton
+        v-if="loading"
+        wrapperClass="empty-state min-h-72"
+        :gridHeights="['8.5rem', '8.5rem', '8.5rem']"
+        :rows="['10.5rem']"
+      />
 
       <div v-else-if="errorMessage" class="empty-state min-h-72">
         <span class="pi pi-exclamation-circle text-2xl text-red-600" />
@@ -172,13 +173,13 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
-import Skeleton from 'primevue/skeleton';
 import api from '@/utils/api';
 import { useAuthStore } from '@/stores/auth';
 import PageWrapper from '@/components/ui/PageWrapper.vue';
 import SectionHeader from '@/components/ui/SectionHeader.vue';
 import StatCard from '@/components/ui/StatCard.vue';
 import UserAvatarMenu from '@/components/ui/UserAvatarMenu.vue';
+import StackedSkeleton from '@/components/ui/StackedSkeleton.vue';
 
 const loading = ref(true);
 const errorMessage = ref('');
