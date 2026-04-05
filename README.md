@@ -28,16 +28,14 @@ It consumes the Laravel API for authentication, wallet operations, transaction h
 
 ## Why This Project
 
-Vaultly simulates core digital banking user journeys end-to-end:
-
-- signup and login with token-based auth
-- balance visibility and dashboard navigation
-- deposit, transfer, withdraw
-- beneficiaries CRUD
-- transaction history with direction (credit/debit)
-- transaction PIN setup/change
-- password change
-- profile and Cloudinary-powered profile picture upload/delete
+Vaultly is a full-stack banking demo built to demonstrate real-world patterns — not just CRUD.
+The backend enforces transactional integrity on all money movement (deposit, transfer, withdraw)
+using database transactions with row-level locking to prevent race conditions. Auth is handled
+via Laravel Sanctum bearer tokens. Media is managed through Cloudinary with deterministic
+public ID tracking so profile pictures can be replaced or deleted cleanly without orphaning
+assets. The frontend is a single-page Vue 3 app with Pinia state management, global 401
+handling, and route ownership guards so users can't access each other's dashboard by changing
+a URL param.
 
 ## Live Demo
 
@@ -77,32 +75,42 @@ Recommended captures:
 - profile picture upload and remove flow
 
 ## Project Structure
-
-```text
-vueTest/
-	src/
-		components/
-			DashBoard.vue
-			Deposit.vue
-			Transfer.vue
-			Withdraw.vue
-			TransactionHistory.vue
-			Beneficiaries.vue
-			Profile.vue
-			SetPin.vue
-			ChangePin.vue
-			ChangePassword.vue
-			LogIn.vue
-			SignUp.vue
-			Home.vue
-			ui/
-				StackedSkeleton.vue
-		stores/
-			auth.js
-		utils/
-			api.js
-	router/
-		index.js
+```
+├── router/
+│   └── index.js 	# Route definitions and navigation guards
+└── src/
+    ├── assets/
+    │   └── main.css
+    ├── components/
+    │   ├── ui/
+    │   │   ├── FormCard.vue
+    │   │   ├── PageWrapper.vue
+    │   │   ├── SectionHeader.vue
+    │   │   ├── StackedSkeleton.vue
+    │   │   ├── StatCard.vue
+    │   │   └── UserAvatarMenu.vue
+    │   ├── Beneficiaries.vue
+    │   ├── ChangePassword.vue
+    │   ├── ChangePin.vue
+    │   ├── DashBoard.vue
+    │   ├── Deposit.vue
+    │   ├── Home.vue
+    │   ├── LogIn.vue
+    │   ├── NotFound.vue
+    │   ├── Profile.vue
+    │   ├── SetPin.vue
+    │   ├── SignUp.vue
+    │   ├── TransactionHistory.vue
+    │   ├── Transfer.vue
+    │   └── Withdraw.vue
+    ├── composables/
+    │   └── useInputNormalization.js
+    ├── stores/
+    │   └── auth.js
+    ├── utils/
+    │   └── api.js
+    ├── App.vue
+    └── main.js
 ```
 
 ## Architecture Deep Dive
@@ -143,17 +151,21 @@ vueTest/
 - npm 9+
 
 ## Quick Start
-
 ```bash
+git clone https://github.com/SlinkyCollins/vaultly-frontend.git
+cd vaultly-frontend
 npm install
+cp .env.example .env        # or create .env manually (see Environment Variables)
 npm run dev
 ```
 
-Open the printed local URL (typically `http://localhost:5173`).
+Open the local URL printed in the terminal (default: `http://localhost:5173`).
+
+> Make sure your backend is running first and `VITE_API_BASE_URL` points to it.
 
 ## Environment Variables
 
-Create `.env` in `vueTest`:
+Create `.env` in `vaultly-frontend`:
 
 ```bash
 VITE_API_BASE_URL=http://127.0.0.1:8000/api
