@@ -1,29 +1,213 @@
-# vueTest
+# Vaultly Frontend (Vue 3)
 
-This template should help get you started developing with Vue 3 in Vite.
+A responsive banking demo frontend built with Vue 3, Vite, Pinia, PrimeVue, and Tailwind CSS.
+It consumes the Laravel API for authentication, wallet operations, transaction history, beneficiaries, PIN flows, and profile management.
 
-## Recommended IDE Setup
+![Vue](https://img.shields.io/badge/Vue-3.5-42b883)
+![Vite](https://img.shields.io/badge/Vite-6.x-646cff)
+![PrimeVue](https://img.shields.io/badge/PrimeVue-4.5-06b6d4)
+![Status](https://img.shields.io/badge/Deployment-Live-success)
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## Table of Contents
 
-## Customize configuration
+- [Why This Project](#why-this-project)
+- [Live Demo](#live-demo)
+- [Tech Stack](#tech-stack)
+- [Screenshots and GIFs](#screenshots-and-gifs)
+- [Project Structure](#project-structure)
+- [Architecture Deep Dive](#architecture-deep-dive)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Environment Variables](#environment-variables)
+- [Scripts](#scripts)
+- [Development Workflow](#development-workflow)
+- [Build and Deployment Notes](#build-and-deployment-notes)
+- [Known Constraints](#known-constraints)
+- [FAQ and Troubleshooting](#faq-and-troubleshooting)
+- [License](#license)
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## Why This Project
 
-## Project Setup
+Vaultly simulates core digital banking user journeys end-to-end:
 
-```sh
-npm install
+- signup and login with token-based auth
+- balance visibility and dashboard navigation
+- deposit, transfer, withdraw
+- beneficiaries CRUD
+- transaction history with direction (credit/debit)
+- transaction PIN setup/change
+- password change
+- profile and Cloudinary-powered profile picture upload/delete
+
+## Live Demo
+
+- Frontend URL: https://vaultlydemo.vercel.app
+- API base (default fallback in client): https://laravellivebankapptest.onrender.com/api
+
+## Tech Stack
+
+- Vue 3
+- Vue Router 4
+- Pinia
+- Axios
+- PrimeVue + PrimeIcons
+- Tailwind CSS 4
+- Vite 6
+
+## Screenshots and GIFs
+
+Use this section for tomorrow's final media pass. Paths below are ready-to-use targets.
+
+![Home and Auth Flow](/vaultly-demos/beneficiaries.mp4)
+![Dashboard Summary](docs/media/frontend/dashboard.png)
+![Transfer with PIN](docs/media/frontend/transfer-pin.gif)
+![Beneficiaries CRUD](docs/media/frontend/beneficiaries.png)
+![Transaction History](/vaultly-demos/transaction-history.gif)
+![Profile and Avatar Upload](docs/media/frontend/profile-cloudinary.gif)
+
+Recommended captures:
+
+- 15-30s auth flow (signup -> login -> dashboard)
+- 20-30s transfer flow with account verify + PIN
+- beneficiaries add/edit/delete sequence
+- profile picture upload and remove flow
+
+## Project Structure
+
+```text
+vueTest/
+	src/
+		components/
+			DashBoard.vue
+			Deposit.vue
+			Transfer.vue
+			Withdraw.vue
+			TransactionHistory.vue
+			Beneficiaries.vue
+			Profile.vue
+			SetPin.vue
+			ChangePin.vue
+			ChangePassword.vue
+			LogIn.vue
+			SignUp.vue
+			Home.vue
+			ui/
+				StackedSkeleton.vue
+		stores/
+			auth.js
+		utils/
+			api.js
+	router/
+		index.js
 ```
 
-### Compile and Hot-Reload for Development
+## Architecture Deep Dive
 
-```sh
+### Routing and Access Control
+
+- Nested dashboard routes under `/dashboard/:userId` require auth.
+- Route guards in `router/index.js`:
+	- block unauthenticated access
+	- hydrate user state after refresh
+	- enforce route user ownership (`:userId` must match authenticated user)
+	- redirect authenticated users away from auth pages
+
+### State and Authentication
+
+- Pinia auth store (`src/stores/auth.js`) holds:
+	- access token (persisted in localStorage)
+	- current user payload
+	- helper actions for dashboard and balance refresh
+
+### API Layer
+
+- Axios instance in `src/utils/api.js`:
+	- uses `VITE_API_BASE_URL` when provided
+	- falls back to deployed API URL
+	- auto-attaches Bearer token
+	- handles 401 globally by clearing auth and redirecting to login with `sessionExpired=1`
+
+### UI Patterns
+
+- PrimeVue for dialogs, toasts, buttons, menus, skeletons.
+- Non-inline global outcomes (success/failure) surfaced via toast.
+- Reusable loading skeleton in `components/ui/StackedSkeleton.vue` to keep loading states consistent across pages.
+
+## Prerequisites
+
+- Node.js 18+
+- npm 9+
+
+## Quick Start
+
+```bash
+npm install
 npm run dev
 ```
 
-### Compile and Minify for Production
+Open the printed local URL (typically `http://localhost:5173`).
 
-```sh
-npm run build
+## Environment Variables
+
+Create `.env` in `vueTest`:
+
+```bash
+VITE_API_BASE_URL=http://127.0.0.1:8000/api
 ```
+
+For production, set it to your deployed backend API endpoint.
+
+## Scripts
+
+```bash
+npm run dev      # start local dev server
+npm run build    # production build
+npm run preview  # preview production build locally
+```
+
+## Development Workflow
+
+1. Start backend API first.
+2. Set `VITE_API_BASE_URL` to backend `/api` root.
+3. Run frontend with `npm run dev`.
+4. Test complete user journey:
+	 - register/login
+	 - set PIN
+	 - deposit
+	 - transfer/withdraw
+	 - beneficiaries/history/profile
+
+## Build and Deployment Notes
+
+- Build output is generated by Vite (`dist/`).
+- Frontend is currently deployed to Vercel.
+- Ensure backend CORS allows your frontend domain.
+
+## Known Constraints
+
+- Requires a reachable backend API URL to function.
+- If backend is on free-tier hosting, first request may be delayed (cold start).
+- Session expiry returns user to login by design.
+- UI expects backend to return validation errors in Laravel-style structures.
+
+## FAQ and Troubleshooting
+
+### CORS errors in browser
+
+- Confirm backend `CORS_ALLOWED_ORIGINS` includes your frontend origin.
+- Confirm `VITE_API_BASE_URL` points to `/api` endpoint, not root domain only.
+
+### Requests fail with 401 immediately
+
+- Clear stale `access_token` from localStorage.
+- Log in again to refresh token.
+
+### Images or profile updates not reflecting
+
+- Hard refresh browser cache.
+- Verify backend Cloudinary configuration is valid.
+
+## License
+
+This project is for educational and portfolio/demo purposes.
+
