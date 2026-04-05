@@ -65,6 +65,10 @@ Use this section for tomorrow's final media pass. Paths below are ready-to-use t
 ![Transaction History](/vaultly-demos/transaction-history.gif)
 ![Profile and Avatar Upload](docs/media/frontend/profile-cloudinary.gif)
 
+No screenshots or GIFs are currently committed in this repository under the referenced paths.
+
+TODO: add real image/GIF assets under a committed path (for example, `docs/media/frontend/`) and then update links.
+
 Recommended captures:
 
 - 15-30s auth flow (signup -> login -> dashboard)
