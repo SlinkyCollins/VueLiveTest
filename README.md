@@ -12,19 +12,21 @@ It consumes the Laravel API for authentication, wallet operations, transaction h
 
 - [Why This Project](#why-this-project)
 - [Live Demo](#live-demo)
+- [Features](#features)
+- [Core Flows and Demo](#core-flows-and-demo)
 - [Tech Stack](#tech-stack)
-- [Screenshots and GIFs](#screenshots-and-gifs)
+- [System Highlights](#system-highlights)
 - [Project Structure](#project-structure)
 - [Architecture Deep Dive](#architecture-deep-dive)
 - [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Environment Variables](#environment-variables)
 - [Scripts](#scripts)
 - [Development Workflow](#development-workflow)
 - [Build and Deployment Notes](#build-and-deployment-notes)
 - [Known Constraints](#known-constraints)
 - [FAQ and Troubleshooting](#faq-and-troubleshooting)
 - [License](#license)
+- [Future Improvements](#future-improvements)
+- [Author](#author)
 
 ## Why This Project
 
@@ -39,8 +41,103 @@ a URL param.
 
 ## Live Demo
 
-- Frontend URL: https://vaultlydemo.vercel.app
-- API base (default fallback in client): https://laravellivebankapptest.onrender.com/api
+- Frontend: https://vaultlydemo.vercel.app
+- Backend API: https://laravellivebankapptest.onrender.com/api
+
+## Features
+
+- Secure authentication with protected dashboard routes
+- Deposit, transfer, and withdrawal workflows
+- Beneficiary management for faster repeat transfers
+- Transaction history with credit/debit visibility
+- Profile and account detail management
+- Transaction PIN setup and update flows
+
+## Core Flows and Demo
+
+### Dashboard Overview
+
+<p align="center">
+    <img src="./assets/screenshots/dashboard.png" alt="Vaultly Dashboard" align="center" width="100%" />
+</p>
+
+### Authentication Flow
+
+<p align="center">
+    <img src="./assets/screenshots/login.png" alt="Authentication UI" align="center" width="100%" />
+</p>
+
+<details>
+    <summary>See it in action</summary>
+    <p align="center">
+        <img src="./assets/gifs/auth.gif" alt="Authentication Demo" align="center" width="100%" />
+    </p>
+</details>
+
+### Deposit Flow
+
+<p align="center">
+    <img src="./assets/screenshots/deposit.png" alt="Deposit UI" align="center" width="100%" />
+</p>
+
+<details>
+    <summary>See it in action</summary>
+    <p align="center">
+        <img src="./assets/gifs/deposit.gif" alt="Deposit Demo" align="center" width="100%" />
+    </p>
+</details>
+
+### Transfer Flow
+
+<p align="center">
+    <img src="./assets/screenshots/transfer.png" alt="Transfer UI" align="center" width="100%" />
+</p>
+
+<details>
+    <summary>See it in action</summary>
+    <p align="center">
+        <img src="./assets/gifs/transfer.gif" alt="Transfer Demo" align="center" width="100%" />
+    </p>
+</details>
+
+### Beneficiaries Flow
+
+<p align="center">
+    <img src="./assets/screenshots/beneficiaries.png" alt="Beneficiaries UI" align="center" width="100%" />
+</p>
+
+<details>
+    <summary>See it in action</summary>
+    <p align="center">
+        <img src="./assets/gifs/beneficiaries.gif" alt="Beneficiaries Demo" align="center" width="100%" />
+    </p>
+</details>
+
+### Transaction History Flow
+
+<p align="center">
+    <img src="./assets/screenshots/transactions.png" alt="Transaction History UI" align="center" width="100%" />
+</p>
+
+<details>
+    <summary>See it in action</summary>
+    <p align="center">
+        <img src="./assets/gifs/transactions.gif" alt="Transaction History Demo" align="center" width="100%" />
+    </p>
+</details>
+
+### Profile Flow
+
+<p align="center">
+    <img src="./assets/screenshots/profile.png" alt="Profile UI" align="center" width="100%" />
+</p>
+
+<details>
+    <summary>See it in action</summary>
+    <p align="center">
+        <img src="./assets/gifs/profile.gif" alt="Profile Demo" align="center" width="100%" />
+    </p>
+</details>
 
 ## Tech Stack
 
@@ -52,34 +149,24 @@ a URL param.
 - Tailwind CSS 4
 - Vite 6
 
-## Screenshots and GIFs
+## System Highlights
 
-Use this section for tomorrow's final media pass. Paths below are ready-to-use targets.
-
-![Home and Auth Flow](/vaultly-demos/beneficiaries.mp4)
-![Dashboard Summary](docs/media/frontend/dashboard.png)
-![Transfer with PIN](docs/media/frontend/transfer-pin.gif)
-![Beneficiaries CRUD](docs/media/frontend/beneficiaries.png)
-![Transaction History](/vaultly-demos/transaction-history.gif)
-![Profile and Avatar Upload](docs/media/frontend/profile-cloudinary.gif)
-
-No screenshots or GIFs are currently committed in this repository under the referenced paths.
-
-TODO: add real image/GIF assets under a committed path (for example, `docs/media/frontend/`) and then update links.
-
-Recommended captures:
-
-- 15-30s auth flow (signup -> login -> dashboard)
-- 20-30s transfer flow with account verify + PIN
-- beneficiaries add/edit/delete sequence
-- profile picture upload and remove flow
+- Logic-first architecture: frontend flows are built against strict backend transaction rules.
+- State and auth handling are centralized in Pinia with persisted token support.
+- Route guards enforce authentication and user-level route ownership.
+- Axios interceptors provide consistent API handling and global unauthorized-session behavior.
+- UI polish phase introduced reusable UI primitives and standardized loading/feedback patterns.
+- Deployment-ready setup with environment-based API configuration and Vercel hosting.
 
 ## Project Structure
-```
+
+```text
 ├── router/
 │   └── index.js 	# Route definitions and navigation guards
 └── src/
     ├── assets/
+        ├── gifs/
+        ├── screenshots/
     │   └── main.css
     ├── components/
     │   ├── ui/
@@ -150,20 +237,16 @@ Recommended captures:
 - Node.js 18+
 - npm 9+
 
-## Quick Start
+### Install and Run
+
 ```bash
 git clone https://github.com/SlinkyCollins/vaultly-frontend.git
 cd vaultly-frontend
 npm install
-cp .env.example .env        # or create .env manually (see Environment Variables)
 npm run dev
 ```
 
-Open the local URL printed in the terminal (default: `http://localhost:5173`).
-
-> Make sure your backend is running first and `VITE_API_BASE_URL` points to it.
-
-## Environment Variables
+### Environment Variables
 
 Create `.env` in `vaultly-frontend`:
 
@@ -226,4 +309,13 @@ npm run preview  # preview production build locally
 ## License
 
 This project is for educational and portfolio/demo purposes.
+
+## Future Improvements
+- Add automated frontend tests for key transaction and auth paths.
+- Expand transaction filtering and search controls.
+- Add stronger analytics/insights on account activity.
+- Improve accessibility coverage and keyboard-navigation feedback.
+        
+## Author
+Built by SlinkyCollins as a full-stack portfolio project.
 
