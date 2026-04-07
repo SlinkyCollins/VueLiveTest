@@ -1,9 +1,8 @@
-# Vaultly — Full-Stack Digital Banking Demo
+# Vaultly Frontend — Digital Banking SPA
 
-A full-stack banking demo built with Vue.js, Laravel and MySQL. The frontend is a single-page app
-handling auth, wallet operations, beneficiary management, and profile flows. The backend
-enforces transactional integrity on all money movement using database transactions with
-row-level locking. Deployed and functional end-to-end.
+Vaultly Frontend is a single-page banking application built with Vue.js. It handles
+authentication, wallet operations, beneficiary management, transaction history, PIN flows,
+and profile management against the Vaultly backend API.
 
 ![Vue](https://img.shields.io/badge/Vue-3.5-42b883)
 ![Vite](https://img.shields.io/badge/Vite-6.x-646cff)
@@ -21,6 +20,7 @@ row-level locking. Deployed and functional end-to-end.
 - [Project Structure](#project-structure)
 - [Architecture Deep Dive](#architecture-deep-dive)
 - [Prerequisites](#prerequisites)
+- [Environment Variables](#environment-variables)
 - [Scripts](#scripts)
 - [Development Workflow](#development-workflow)
 - [Build and Deployment Notes](#build-and-deployment-notes)
@@ -42,13 +42,13 @@ came before UI polish — so the interface is backed by real transaction semanti
 On the backend: all money movement (deposit, transfer, withdraw) runs inside database
 transactions with row-level locking to prevent race conditions. Auth is handled via Laravel
 Sanctum bearer tokens. Media is managed through Cloudinary with deterministic public ID
-tracking so profile pictures can be replaced or deleted cleanly without orphaning assets.
+tracking so profile pictures can be replaced or deleted cleanly without orphaning assets — see the [backend repo](https://github.com/SlinkyCollins/vaultly-backend)
+for details.
 
 ## Live Demo
 
 - Frontend: https://vaultlydemo.vercel.app
 - Backend API: https://laravellivebankapptest.onrender.com/api
-- Backend repository: https://github.com/SlinkyCollins/vaultly-backend
 
 > The backend is on a free-tier host. The first request after idle may take 20–30 seconds to
 > respond (cold start). Subsequent requests are fast.
@@ -185,8 +185,8 @@ vaultly-frontend/
 ├── router/
 │   └── index.js          # Route definitions and navigation guards
 └── src/
-  ├── assets/
-  │   └── main.css      # Global styles and Tailwind component layer
+    ├── assets/
+    │   └── main.css       # Global styles and Tailwind component layer
     ├── components/
     │   ├── ui/
     │   │   ├── FormCard.vue
@@ -212,9 +212,9 @@ vaultly-frontend/
     ├── composables/
     │   └── useInputNormalization.js   # Strips non-digits and enforces max length on inputs
     ├── stores/
-    │   └── auth.js        # Token persistence, user state, balance updates
+    │   └── auth.js                   # Token persistence, user state, balance updates
     ├── utils/
-    │   └── api.js         # Axios instance, interceptors, base URL resolution
+    │   └── api.js                    # Axios instance, interceptors, base URL resolution
     ├── App.vue
     └── main.js
 ```
@@ -268,6 +268,17 @@ Interceptors are initialized once at app startup via `initApiInterceptors(router
 - npm 9+
 - A running Vaultly backend API (local or deployed)
 
+## Environment Variables
+
+Create a `.env` file in the project root:
+
+```bash
+VITE_API_BASE_URL=http://127.0.0.1:8000/api
+```
+
+For production, set this to your deployed backend API endpoint. If the variable is absent,
+the client falls back to the deployed Render API URL hardcoded in `src/utils/api.js`.
+
 ## Scripts
 ```bash
 npm run dev      # start local dev server
@@ -288,16 +299,6 @@ npm run preview  # preview production build locally
    - withdraw
    - check transaction history
    - update profile and profile picture
-
-### Environment Variables
-
-Create a `.env` file in the project root:
-```bash
-VITE_API_BASE_URL=http://127.0.0.1:8000/api
-```
-
-For production, set this to your deployed backend API endpoint. If the variable is absent,
-the client falls back to the deployed Render API URL hardcoded in `src/utils/api.js`.
 
 ## Build and Deployment Notes
 
